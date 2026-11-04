@@ -3686,10 +3686,11 @@ if(!window.claude){
    if(m.t==='hi'){me=m.id;clearTimeout(timer);fin(res,{name,cap:m.cap,
      peers:()=>list.map(a=>({peer:a[0],isMe:a[0]===me,sameTab:a[0]===me,kind:'viewer',guest:false,by:null,presence:{n:a[1],ch:a[2],f:a[3],x:a[4],y:a[5],d:a[6],m:a[7],c:a[8],s:a[9],r:a[10],l:a[11]}})),
      presence:async p=>{if(ws.readyState===1)ws.send(JSON.stringify({t:'p',d:p}))},
-     emit:async(tp,d)=>{if(ws.readyState!==1)return;if(tp==='chat')ws.send(JSON.stringify({t:'c',x:d&&d.x}));else if(tp==='emo')ws.send(JSON.stringify({t:'e',x:d&&d.x}))},
+     ping:()=>{if(ws.readyState===1)ws.send(JSON.stringify({t:'q',c:performance.now()}))},emit:async(tp,d)=>{if(ws.readyState!==1)return;if(tp==='chat')ws.send(JSON.stringify({t:'c',x:d&&d.x}));else if(tp==='emo')ws.send(JSON.stringify({t:'e',x:d&&d.x}))},
      on:(tp,f)=>{(hs[tp]=hs[tp]||[]).push(f);return()=>{hs[tp]=(hs[tp]||[]).filter(q=>q!==f)}},
      leave:async()=>{try{ws.close()}catch(_){}},onPeers(){return()=>{}},connected:()=>ws.readyState===1})}
    else if(m.t==='s'){list=m.a;if(m.ts){const off=Date.now()-m.ts,S=window.__snap||(window.__snap={off:off});if(off<S.off)S.off=off;else S.off+=(off-S.off)*.005;S.ts=m.ts}}
+   else if(m.t==='a'){const q=performance.now()-m.c,R=window.__rtt||(window.__rtt={v:q,j:0,n:0});R.j=R.j*.8+Math.abs(q-R.v)*.2;R.v=R.v*.7+q*.3;R.n++;const e=document.getElementById('netping');if(e){const v=Math.round(R.v);e.textContent='📶 '+v+' ms';e.style.color=v<120?'#7dff9a':v<250?'#ffd24a':'#ff7a7a';e.title='Độ trễ tới máy chủ (ping), dao động ±'+Math.round(R.j)+' ms'}}
    else if(m.t==='m')fire('chat',{peer:m.id,isMe:m.id===me,data:{x:m.x}});
    else if(m.t==='o')fire('emo',{peer:m.id,isMe:m.id===me,data:{x:m.x}});
    else if(m.t==='sys')fire('sys',{data:{x:m.x}});
@@ -3816,7 +3817,7 @@ function netBar(){let d=document.getElementById('netbar');if(!d){d=document.crea
    if(k==='emo'){const r=b.getBoundingClientRect(),m=netDom.emo;m.style.display=m.style.display==='flex'?'none':'flex';m.style.left=Math.max(4,r.left)+'px';m.style.top=(r.bottom+6)+'px';return}
    if(k==='ch'){netPickOpen(id=>{if(id===NET.skin)return;netApplySkin(id);netSend(true);netBar();try{cv.focus()}catch(_){}});return}})}
  const n=NET.room?NET.room.peers().filter(q=>q.kind==='viewer').length:0;
- d.innerHTML='<span>🌐 Phòng '+NET.code+' · '+n+'/'+NET.cap+'</span><button class="netm" data-k="chat" title="Chat (C)">💬 Chat</button><button data-k="emo">😀</button><button data-k="ch">🧑 '+netName(NET.skin)+'</button><button data-k="quit" style="background:#5a2222">Thoát</button>'}
+ d.innerHTML='<span>🌐 Phòng '+NET.code+' · '+n+'/'+NET.cap+'</span><span id="netping" style="font-weight:700;color:'+(window.__rtt?(window.__rtt.v<120?'#7dff9a':window.__rtt.v<250?'#ffd24a':'#ff7a7a'):'#fff')+'">📶 '+(window.__rtt?Math.round(window.__rtt.v)+' ms':'…')+'</span><button class="netm" data-k="chat" title="Chat (C)">💬 Chat</button><button data-k="emo">😀</button><button data-k="ch">🧑 '+netName(NET.skin)+'</button><button data-k="quit" style="background:#5a2222">Thoát</button>'}
 // ---------- gửi / nhận vị trí ----------
 function netSend(force){if(!NET.on||!NET.room)return;const t=p.mv?p.t:0,x=+(p.x+(p.fx-p.x)*t).toFixed(2),y=+(p.y+(p.fy-p.y)*t).toFixed(2),st=hid?'h':(typeof lie!=='undefined'&&lie)?'h':sit?'s':wolfMode?'w':'',rn=p.run&&p.mv?1:0,lp=p.lp?1:0,k=[NET.skin,FLR,x,y,p.dir,p.mv?1:0,NET.col,st,rn,lp].join();const now=performance.now();if(!force&&(k===NET.lastKey||now-NET.lastSend<48))return;NET.lastKey=k;NET.lastSend=now;NET.room.presence({s:st,r:rn,l:lp,n:(NET.name||'Khách').slice(0,14),c:NET.col,ch:NET.skin,f:FLR,x,y,d:p.dir,m:p.mv?1:0}).catch(()=>{})}
 function netPeers(){return NET.room?NET.room.peers().filter(q=>q.kind==='viewer'&&!q.isMe&&q.presence&&q.presence.ch):[]}
@@ -3867,6 +3868,8 @@ function netLayout(){try{
   else{ch.style.top='auto';ch.style.bottom='6px'}}
 }catch(_){}}
 setInterval(netLayout,200);addEventListener('resize',netLayout);
+
+setInterval(()=>{try{if(NET.on&&NET.room&&NET.room.ping)NET.room.ping()}catch(_){}},2000);
 </script>
 <!-- v-breath -->
 </body>

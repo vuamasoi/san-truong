@@ -55,6 +55,7 @@ wss.on('connection',(ws,req)=>{
    joined=true;clearTimeout(joinTimer);if(!admin)ipPlayers.set(ip,(ipPlayers.get(ip)||0)+1);
    room=R;name=nm;R.set(id,{ws,p:{n:'Khách',ch:'jaki',f:0,x:0,y:0,d:'d',m:0}});send(ws,{t:'hi',id,cap:MAX_ROOM});return}
   if(!joined)return;
+  if(m.t==='q'){send(ws,{t:'a',c:m.c});return}
   const c=room.get(id);if(!c)return;
   if(m.t==='p'&&m.d&&typeof m.d==='object'){Object.assign(c.p,cleanP(m.d))}
   else if(m.t==='c'){ // chat
