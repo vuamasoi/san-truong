@@ -3840,7 +3840,7 @@ function netSync(){if(!NET.on||!NET.room)return;const now=performance.now();cons
    if(B.length>=2&&rt>=B[0].t){const a=B[0],c=B[1],f=Math.max(0,Math.min(1,(rt-a.t)/Math.max(1,c.t-a.t)));if(Math.hypot(c.x-a.x,c.y-a.y)>6*T){nx=c.x;ny=c.y}else{nx=a.x+(c.x-a.x)*f;ny=a.y+(c.y-a.y)*f}}
    else{nx=B[0].x;ny=B[0].y}}
   const dx=nx-o.px,dy=ny-o.py;
-  if(Math.hypot(dx,dy)>6*T||!S){o.px=nx;o.py=ny}else{o.px=nx;o.py=ny}
+  if(Math.hypot(dx,dy)>3*T||!S||!o.sm){o.px=nx;o.py=ny;o.sm=1}else{const k2=1-Math.exp(-dtm/60);o.px+=dx*k2;o.py+=dy*k2}
   o.x=Math.round(o.px/T);o.y=Math.round(o.py/T);o.step=(o.st==='s')?0:(pr.m||Math.hypot(dx,dy)>3)?[1,0,-1,0][Math.floor(now/(pr.r?85:130))%4]:0}}
 // ---------- vẽ tên, chat, emoji ----------
 function netBubble(text,cx,by){g.save();g.font='12px "Be Vietnam Pro","Noto Sans",sans-serif';g.textAlign='center';const L=wrap(text,150).slice(0,3),w=Math.min(160,Math.max(...L.map(l=>g.measureText(l).width))+14),h=L.length*15+8,x=Math.round(cx-w/2),y=Math.round(by-h);
