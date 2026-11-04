@@ -3724,6 +3724,7 @@ body.neton #flr,body.neton #sw,body.neton [data-a="mdv"],body.neton #top{display
 #netlog div{background:rgba(10,12,24,.72);color:#fff;padding:2px 7px;border-radius:3px;word-break:break-word;transition:opacity .6s}
 #netlog div.old{opacity:0}
 #netchat.open #netlog div.old{opacity:1}#netchat.open #netlog{max-height:240px}
+@media (pointer:fine){#netbar .netm{display:none}#netinp{display:flex!important}}
 #netinp{display:none;margin-top:4px;pointer-events:auto;gap:4px}
 #netchat.open #netinp{display:flex}
 #netinp input{flex:1;font:inherit;padding:6px 8px;border:2px solid #e0b84a;background:#10121f;color:#fff;outline:none;min-width:0}
@@ -3815,7 +3816,7 @@ function netBar(){let d=document.getElementById('netbar');if(!d){d=document.crea
    if(k==='emo'){const r=b.getBoundingClientRect(),m=netDom.emo;m.style.display=m.style.display==='flex'?'none':'flex';m.style.left=Math.max(4,r.left)+'px';m.style.top=(r.bottom+6)+'px';return}
    if(k==='ch'){netPickOpen(id=>{if(id===NET.skin)return;netApplySkin(id);netSend(true);netBar();try{cv.focus()}catch(_){}});return}})}
  const n=NET.room?NET.room.peers().filter(q=>q.kind==='viewer').length:0;
- d.innerHTML='<span>🌐 Phòng '+NET.code+' · '+n+'/'+NET.cap+'</span><button data-k="chat" title="Chat (C)">💬 Chat</button><button data-k="emo">😀</button><button data-k="ch">🧑 '+netName(NET.skin)+'</button><button data-k="quit" style="background:#5a2222">Thoát</button>'}
+ d.innerHTML='<span>🌐 Phòng '+NET.code+' · '+n+'/'+NET.cap+'</span><button class="netm" data-k="chat" title="Chat (C)">💬 Chat</button><button data-k="emo">😀</button><button data-k="ch">🧑 '+netName(NET.skin)+'</button><button data-k="quit" style="background:#5a2222">Thoát</button>'}
 // ---------- gửi / nhận vị trí ----------
 function netSend(force){if(!NET.on||!NET.room)return;const t=p.mv?p.t:0,x=+(p.x+(p.fx-p.x)*t).toFixed(2),y=+(p.y+(p.fy-p.y)*t).toFixed(2),st=hid?'h':(typeof lie!=='undefined'&&lie)?'h':sit?'s':wolfMode?'w':'',rn=p.run&&p.mv?1:0,lp=p.lp?1:0,k=[NET.skin,FLR,x,y,p.dir,p.mv?1:0,NET.col,st,rn,lp].join();const now=performance.now();if(!force&&(k===NET.lastKey||now-NET.lastSend<120))return;NET.lastKey=k;NET.lastSend=now;NET.room.presence({s:st,r:rn,l:lp,n:(NET.name||'Khách').slice(0,14),c:NET.col,ch:NET.skin,f:FLR,x,y,d:p.dir,m:p.mv?1:0}).catch(()=>{})}
 function netPeers(){return NET.room?NET.room.peers().filter(q=>q.kind==='viewer'&&!q.isMe&&q.presence&&q.presence.ch):[]}
@@ -3838,7 +3839,7 @@ function netBubble(text,cx,by){g.save();g.font='12px "Be Vietnam Pro","Noto Sans
 function netLabelAt(px,py,name,col,id,sitting){const now=performance.now();const ny=py-(sitting?26:36);
  g.save();g.font='bold 11px "Be Vietnam Pro","Noto Sans",sans-serif';g.textAlign='center';g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.8)';g.fillStyle=col||'#ffe58a';g.strokeText(name,px+16,ny);g.fillText(name,px+16,ny);g.restore();
  const c=NET.chats.get(id);if(c){if(now>c.until)NET.chats.delete(id);else netBubble(c.x,px+16,ny-14)}
- const e=NET.emos.get(id);if(e){const k=(now-e.t)/2600;if(k>=1)NET.emos.delete(id);else{g.save();g.globalAlpha=k>.75?(1-k)*4:1;g.font='28px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';g.textAlign='center';g.fillText(NETEMO[e.x],px+16,ny-18-k*22);g.restore()}}}
+ const e=NET.emos.get(id);if(e){const k=(now-e.t)/3200;if(k>=1)NET.emos.delete(id);else{const age=now-e.t,sc=age<260?.3+.9*(age/260):age<400?1.2-.2*((age-260)/140):1,al=k>.7?(1-k)/.3:1,cx=px+16,cy=ny-34-Math.min(1,age/500)*10-k*10;g.save();g.globalAlpha=al;g.translate(cx,cy);g.scale(sc,sc);g.fillStyle='rgba(255,255,255,.92)';g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=2;g.beginPath();g.arc(0,0,21,0,6.2832);g.fill();g.stroke();g.beginPath();g.moveTo(-5,19);g.lineTo(0,27);g.lineTo(5,19);g.fill();g.fillStyle='#000';g.font='28px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(NETEMO[e.x],0,2);g.restore()}}}
 function netDraw(){if(!NET.on)return;
  for(const [id,o] of NET.acts){if(!objs.includes(o))continue;netLabelAt(o.px,o.py,o.name,o.col,id,o.st==='s')}
  const t=p.mv?p.t:0,px=(p.x+(p.fx-p.x)*t)*T,py=(p.y+(p.fy-p.y)*t)*T;if(!hid)netLabelAt(px,py,NET.name,NET.col,'me',!!sit)}
