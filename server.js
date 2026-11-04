@@ -6,6 +6,12 @@ const MAX_CONN=+process.env.MAX_CONN||500,MAX_ROOMS=+process.env.MAX_ROOMS||100,
 const ADMIN_KEY=process.env.ADMIN_KEY||'';          // đặt biến này để chủ server được vào nhiều kết nối từ cùng một địa chỉ mạng
 const IP_LIMIT=process.env.IP_LIMIT===undefined?1:+process.env.IP_LIMIT; // số người chơi tối đa mỗi địa chỉ mạng (0 = không giới hạn)
 const FILE=path.join(__dirname,'public','index.html');
+const zlib=require('zlib');
+const PAGE={raw:null,gz:null,br:null,etag:''};
+function loadPage(){fs.readFile(FILE,(e,b)=>{if(e)return;PAGE.raw=b;PAGE.gz=PAGE.br=null;PAGE.etag='"'+crypto.createHash('sha1').update(b).digest('hex').slice(0,16)+'"';
+ zlib.gzip(b,{level:9},(er,z)=>{if(!er&&PAGE.raw===b)PAGE.gz=z});
+ zlib.brotliCompress(b,{params:{[zlib.constants.BROTLI_PARAM_QUALITY]:8,[zlib.constants.BROTLI_PARAM_SIZE_HINT]:b.length}},(er,z)=>{if(!er&&PAGE.raw===b)PAGE.br=z})})}
+loadPage();
 process.on('uncaughtException',e=>console.error('uncaught',e&&e.message));
 process.on('unhandledRejection',e=>console.error('unhandled',e&&e.message));
 
@@ -13,7 +19,12 @@ const srv=http.createServer((q,r)=>{
  if(q.url==='/health'){r.writeHead(200);r.end('ok');return}
  if(q.url.startsWith('/whoami')){let k='';try{k=new URL(q.url,'http://x').searchParams.get('key')||''}catch(e){}const ip=ipOf(q);if(!(ADMIN_KEY?safeEq(k,ADMIN_KEY):isLoop(ip))){r.writeHead(403);r.end('forbidden');return}
   const h=q.headers;r.writeHead(200,{'Content-Type':'application/json'});r.end(JSON.stringify({dang_dung:ip,cf:h['cf-connecting-ip']||null,trueClient:h['true-client-ip']||null,xff:h['x-forwarded-for']||null,socket:q.socket.remoteAddress},null,1));return}
- if(q.url==='/'||q.url.startsWith('/?')){fs.readFile(FILE,(e,b)=>{if(e){r.writeHead(500);r.end('missing public/index.html');return}r.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'});r.end(b)});return}
+ if(q.url==='/'||q.url.startsWith('/?')){if(!PAGE.raw){r.writeHead(500);r.end('missing public/index.html');return}
+  const H={'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache','ETag':PAGE.etag,'Vary':'Accept-Encoding','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
+  if(q.headers['if-none-match']===PAGE.etag){r.writeHead(304,H);r.end();return}
+  const ae=String(q.headers['accept-encoding']||'');let body=PAGE.raw;
+  if(PAGE.br&&/\bbr\b/.test(ae)){body=PAGE.br;H['Content-Encoding']='br'}else if(PAGE.gz&&/\bgzip\b/.test(ae)){body=PAGE.gz;H['Content-Encoding']='gzip'}
+  H['Content-Length']=body.length;r.writeHead(200,H);r.end(body);return}
  r.writeHead(404);r.end('not found')});
 const wss=new WebSocketServer({server:srv,path:'/ws',maxPayload:1024,verifyClient:(info,cb)=>{
  const o=info.origin,h=info.req.headers.host;
@@ -31,6 +42,17 @@ function isLoop(ip){return ip==='127.0.0.1'||ip==='::1'||ip==='::ffff:127.0.0.1'
 function safeEq(a,b){const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&crypto.timingSafeEqual(x,y)}
 function cleanName(s){let n=FILTER.clean(s,14)||'Khách';if(FILTER.bad(n))n='Khách';return n}
 function cleanP(d){const o={};if(typeof d.n==='string')o.n=cleanName(d.n);if(SKINS.has(d.ch))o.ch=d.ch;if(d.f!==undefined)o.f=Math.round(num(d.f,0,20));if(d.x!==undefined)o.x=+num(d.x,0,400).toFixed(2);if(d.y!==undefined)o.y=+num(d.y,0,400).toFixed(2);if(['u','d','l','r'].includes(d.d))o.d=d.d;if(d.m!==undefined)o.m=d.m?1:0;if(typeof d.c==='string'&&/^#[0-9a-fA-F]{6}$/.test(d.c))o.c=d.c;if(typeof d.s==='string')o.s=['h','s','w'].includes(d.s)?d.s:'';if(d.r!==undefined)o.r=d.r?1:0;if(d.l!==undefined)o.l=d.l?1:0;return o}
+// Chống cheat tốc độ: mỗi người có "ngân sách quãng đường" (ô). Đi nhanh quá mức thì vị trí bị kéo lại.
+const MOVE_CAP=+process.env.MOVE_CAP||24, MOVE_RATE=+process.env.MOVE_RATE||10.5;
+function moveCheck(c,np,now){
+ const q=c.q||(c.q={b:MOVE_CAP,t:now,v:0,seen:false});
+ q.b=Math.min(MOVE_CAP,q.b+(now-q.t)/1000*MOVE_RATE);q.t=now;if(q.v>0&&Math.random()<.02)q.v--;
+ if(np.x===undefined&&np.y===undefined)return 0;
+ const nf=np.f!==undefined&&np.f!==c.p.f;
+ if(!q.seen||nf){q.seen=true;return 0}
+ const ox=c.p.x,oy=c.p.y,nx=np.x===undefined?ox:np.x,ny=np.y===undefined?oy:np.y,d=Math.hypot(nx-ox,ny-oy);
+ if(d<=q.b){q.b-=d;return 0}
+ const k=d>0?Math.max(0,q.b)/d:0;np.x=+(ox+(nx-ox)*k).toFixed(2);np.y=+(oy+(ny-oy)*k).toFixed(2);q.b=0;return ++q.v}
 function send(ws,o){if(ws.readyState===1)ws.send(JSON.stringify(o))}
 function bcast(R,o){const m=JSON.stringify(o);for(const c of R.values())if(c.ws.readyState===1)c.ws.send(m)}
 
@@ -57,7 +79,7 @@ wss.on('connection',(ws,req)=>{
   if(!joined)return;
   if(m.t==='q'){send(ws,{t:'a',c:m.c});return}
   const c=room.get(id);if(!c)return;
-  if(m.t==='p'&&m.d&&typeof m.d==='object'){Object.assign(c.p,cleanP(m.d))}
+  if(m.t==='p'&&m.d&&typeof m.d==='object'){const np=cleanP(m.d),vv=moveCheck(c,np,now);if(vv>300)ws.terminate();Object.assign(c.p,np)}
   else if(m.t==='c'){ // chat
    if(now<muteUntil){send(ws,{t:'sys',x:'Bạn đang bị tạm cấm chat '+Math.ceil((muteUntil-now)/1000)+' giây.'});return}
    if(now-chatAt<1200){send(ws,{t:'sys',x:'Bạn chat nhanh quá, đợi một chút.'});return}

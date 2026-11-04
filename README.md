@@ -29,3 +29,7 @@ Mở https://ten-cua-ban.onrender.com/whoami?key=CHUỖI_BÍ_MẬT trên máy t�
 ## Chưa chống được
 - Người chơi sửa trạng thái trên máy họ (cheat) như đổi vị trí, đi xuyên tường: máy chủ chưa kiểm tra tốc độ di chuyển.
 - Tấn công mạng quy mô lớn (DDoS): cần dịch vụ như Cloudflare.
+
+## Nén trang và chống cheat tốc độ
+- Máy chủ tự nén trang (brotli/gzip) và dùng ETag: lần vào đầu tải khoảng 3,2 MB thay vì 4,8 MB, các lần sau gần như không tải lại.
+- Máy chủ giới hạn tốc độ di chuyển (MOVE_RATE, mặc định 10,5 ô/giây, bộ đệm MOVE_CAP 24 ô). Ai "bay" nhanh hơn sẽ bị kéo lại vị trí; vi phạm kéo dài sẽ bị ngắt kết nối.
