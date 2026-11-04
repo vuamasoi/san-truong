@@ -1,7 +1,7 @@
 // Máy chủ chơi mạng "Sân trường online": phục vụ trang game, đồng bộ vị trí, chat, emoji.
 const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto'),{WebSocketServer}=require('ws');
 const FILTER=require('./filter.js');
-const PORT=process.env.PORT||3000,MAX_ROOM=+process.env.MAX_ROOM||50,TICK=+process.env.TICK_MS||70;
+const PORT=process.env.PORT||3000,MAX_ROOM=+process.env.MAX_ROOM||50,TICK=+process.env.TICK_MS||55;
 const MAX_CONN=+process.env.MAX_CONN||500,MAX_ROOMS=+process.env.MAX_ROOMS||100,PER_IP_SOCKETS=12;
 const ADMIN_KEY=process.env.ADMIN_KEY||'';          // đặt biến này để chủ server được vào nhiều kết nối từ cùng một địa chỉ mạng
 const IP_LIMIT=process.env.IP_LIMIT===undefined?1:+process.env.IP_LIMIT; // số người chơi tối đa mỗi địa chỉ mạng (0 = không giới hạn)
@@ -70,6 +70,6 @@ wss.on('connection',(ws,req)=>{
   if(joined){if(!admin){const k=(ipPlayers.get(ip)||1)-1;if(k>0)ipPlayers.set(ip,k);else ipPlayers.delete(ip)}if(room){room.delete(id);if(!room.size&&rooms.get(name)===room)rooms.delete(name)}}});
  ws.on('error',()=>{});
 });
-setInterval(()=>{for(const [nm,R] of rooms){const arr=[];for(const [id,c] of R)arr.push([id,c.p.n,c.p.ch,c.p.f,c.p.x,c.p.y,c.p.d,c.p.m,c.p.c||'',c.p.s||'',c.p.r||0,c.p.l||0]);const msg=JSON.stringify({t:'s',a:arr});for(const c of R.values())if(c.ws.readyState===1)c.ws.send(msg)}},TICK);
+setInterval(()=>{for(const [nm,R] of rooms){const arr=[];for(const [id,c] of R)arr.push([id,c.p.n,c.p.ch,c.p.f,c.p.x,c.p.y,c.p.d,c.p.m,c.p.c||'',c.p.s||'',c.p.r||0,c.p.l||0]);const msg=JSON.stringify({t:'s',ts:Date.now(),a:arr});for(const c of R.values())if(c.ws.readyState===1)c.ws.send(msg)}},TICK);
 setInterval(()=>{for(const ws of wss.clients){if(!ws.isAlive){ws.terminate();continue}ws.isAlive=false;try{ws.ping()}catch(e){}}},25000);
 srv.listen(PORT,()=>console.log('Sân trường online chạy ở cổng '+PORT+(ADMIN_KEY?' (có ADMIN_KEY)':' (không có ADMIN_KEY: chỉ localhost được miễn giới hạn)')));
