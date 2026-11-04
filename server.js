@@ -1,7 +1,7 @@
 // Máy chủ chơi mạng "Sân trường online": phục vụ trang game, đồng bộ vị trí, chat, emoji.
 const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto'),{WebSocketServer}=require('ws');
 const FILTER=require('./filter.js');
-const PORT=process.env.PORT||3000,MAX_ROOM=+process.env.MAX_ROOM||50,TICK=+process.env.TICK_MS||110;
+const PORT=process.env.PORT||3000,MAX_ROOM=+process.env.MAX_ROOM||50,TICK=+process.env.TICK_MS||70;
 const MAX_CONN=+process.env.MAX_CONN||500,MAX_ROOMS=+process.env.MAX_ROOMS||100,PER_IP_SOCKETS=12;
 const ADMIN_KEY=process.env.ADMIN_KEY||'';          // đặt biến này để chủ server được vào nhiều kết nối từ cùng một địa chỉ mạng
 const IP_LIMIT=process.env.IP_LIMIT===undefined?1:+process.env.IP_LIMIT; // số người chơi tối đa mỗi địa chỉ mạng (0 = không giới hạn)

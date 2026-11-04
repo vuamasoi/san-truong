@@ -3818,9 +3818,9 @@ function netBar(){let d=document.getElementById('netbar');if(!d){d=document.crea
  const n=NET.room?NET.room.peers().filter(q=>q.kind==='viewer').length:0;
  d.innerHTML='<span>🌐 Phòng '+NET.code+' · '+n+'/'+NET.cap+'</span><button class="netm" data-k="chat" title="Chat (C)">💬 Chat</button><button data-k="emo">😀</button><button data-k="ch">🧑 '+netName(NET.skin)+'</button><button data-k="quit" style="background:#5a2222">Thoát</button>'}
 // ---------- gửi / nhận vị trí ----------
-function netSend(force){if(!NET.on||!NET.room)return;const t=p.mv?p.t:0,x=+(p.x+(p.fx-p.x)*t).toFixed(2),y=+(p.y+(p.fy-p.y)*t).toFixed(2),st=hid?'h':(typeof lie!=='undefined'&&lie)?'h':sit?'s':wolfMode?'w':'',rn=p.run&&p.mv?1:0,lp=p.lp?1:0,k=[NET.skin,FLR,x,y,p.dir,p.mv?1:0,NET.col,st,rn,lp].join();const now=performance.now();if(!force&&(k===NET.lastKey||now-NET.lastSend<120))return;NET.lastKey=k;NET.lastSend=now;NET.room.presence({s:st,r:rn,l:lp,n:(NET.name||'Khách').slice(0,14),c:NET.col,ch:NET.skin,f:FLR,x,y,d:p.dir,m:p.mv?1:0}).catch(()=>{})}
+function netSend(force){if(!NET.on||!NET.room)return;const t=p.mv?p.t:0,x=+(p.x+(p.fx-p.x)*t).toFixed(2),y=+(p.y+(p.fy-p.y)*t).toFixed(2),st=hid?'h':(typeof lie!=='undefined'&&lie)?'h':sit?'s':wolfMode?'w':'',rn=p.run&&p.mv?1:0,lp=p.lp?1:0,k=[NET.skin,FLR,x,y,p.dir,p.mv?1:0,NET.col,st,rn,lp].join();const now=performance.now();if(!force&&(k===NET.lastKey||now-NET.lastSend<75))return;NET.lastKey=k;NET.lastSend=now;NET.room.presence({s:st,r:rn,l:lp,n:(NET.name||'Khách').slice(0,14),c:NET.col,ch:NET.skin,f:FLR,x,y,d:p.dir,m:p.mv?1:0}).catch(()=>{})}
 function netPeers(){return NET.room?NET.room.peers().filter(q=>q.kind==='viewer'&&!q.isMe&&q.presence&&q.presence.ch):[]}
-function netSync(){if(!NET.on||!NET.room)return;const now=performance.now();let peers=netPeers().filter(q=>q.presence.f===FLR&&q.presence.s!=='h');
+function netSync(){if(!NET.on||!NET.room)return;const now=performance.now();const dtm=Math.min(100,Math.max(1,now-(NET.lastSync||now)));NET.lastSync=now;const kk=1-Math.exp(-dtm/85);let peers=netPeers().filter(q=>q.presence.f===FLR&&q.presence.s!=='h');
  const cx=p.x,cy=p.y;peers.sort((a,b)=>Math.hypot(a.presence.x-cx,a.presence.y-cy)-Math.hypot(b.presence.x-cx,b.presence.y-cy));peers=peers.slice(0,Math.max(0,NET.cap-1));
  const keep=new Set(peers.map(q=>q.peer));
  for(const [id,o] of NET.acts)if(!keep.has(id)){const i=objs.indexOf(o);if(i>=0)objs.splice(i,1);NET.acts.delete(id)}
@@ -3830,7 +3830,7 @@ function netSync(){if(!NET.on||!NET.room)return;const now=performance.now();let 
   o.col=/^#[0-9a-f]{6}$/i.test(pr.c||'')?pr.c:'#ffe58a';o.st=pr.s||'';o.lp=!!pr.l;o.nch=NETSK.some(s=>s.id===pr.ch)?pr.ch:'jaki';
   {let n=NETF.clean(pr.n,14)||'?';if(NETF.bad(n))n='Khách';o.name=n}
   o.dir=pr.d||o.dir;const tx=pr.x*T,ty=pr.y*T,dx=tx-o.px,dy=ty-o.py;
-  if(Math.hypot(dx,dy)>6*T){o.px=tx;o.py=ty}else{o.px+=dx*.35;o.py+=dy*.35}
+  if(Math.hypot(dx,dy)>6*T){o.px=tx;o.py=ty}else{o.px+=dx*kk;o.py+=dy*kk}
   o.x=Math.round(o.px/T);o.y=Math.round(o.py/T);o.step=(o.st==='s')?0:(pr.m||Math.hypot(dx,dy)>3)?[1,0,-1,0][Math.floor(now/(pr.r?85:130))%4]:0}}
 // ---------- vẽ tên, chat, emoji ----------
 function netBubble(text,cx,by){g.save();g.font='12px "Be Vietnam Pro","Noto Sans",sans-serif';g.textAlign='center';const L=wrap(text,150).slice(0,3),w=Math.min(160,Math.max(...L.map(l=>g.measureText(l).width))+14),h=L.length*15+8,x=Math.round(cx-w/2),y=Math.round(by-h);
