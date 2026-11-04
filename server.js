@@ -53,7 +53,7 @@ wss.on('connection',(ws,req)=>{
    let R=rooms.get(nm);if(!R){if(rooms.size>=MAX_ROOMS){send(ws,{t:'err',code:'limit_reached'});return}R=new Map();rooms.set(nm,R)}
    if(R.size>=MAX_ROOM){send(ws,{t:'err',code:'limit_reached'});return}
    joined=true;clearTimeout(joinTimer);if(!admin)ipPlayers.set(ip,(ipPlayers.get(ip)||0)+1);
-   room=R;name=nm;R.set(id,{ws,p:{n:'Khách',ch:'jaki',f:0,x:0,y:0,d:'d',m:0}});send(ws,{t:'hi',id});return}
+   room=R;name=nm;R.set(id,{ws,p:{n:'Khách',ch:'jaki',f:0,x:0,y:0,d:'d',m:0}});send(ws,{t:'hi',id,cap:MAX_ROOM});return}
   if(!joined)return;
   const c=room.get(id);if(!c)return;
   if(m.t==='p'&&m.d&&typeof m.d==='object'){Object.assign(c.p,cleanP(m.d))}

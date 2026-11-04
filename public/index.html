@@ -722,7 +722,7 @@ for(const fl of FLOORS){fl.objs=fl.objs.filter(o=>!(o.x>=TRX0&&o.x<=TRX1&&o.y>=T
 FLOORS[0].objs=FLOORS[0].objs.filter(o=>!(o.type==='oak'&&o.x===44&&o.y===105));
 function setFloor(f){scDropAll();FLR=f;if(f===2)mrHide=false;genkan(f);objs.length=0;objs.push(...FLOORS[f].objs);if(f===2){FLOORS[2].npc=null;npc=NPC0;for(const arr of [objs,FLOORS[2].objs])for(let i=arr.length-1;i>=0;i--)if(arr[i].type==='npc'&&arr[i].name==='Mr Cà Rốt')arr.splice(i,1);if(!objs.some(o=>o.type==='cstu')){try{addClassStudents()}catch(e){}}}doors.length=0;doors.push(...FLOORS[f].doors);lockers.length=0;lockers.push(...FLOORS[f].lockers);fridges.length=0;fridges.push(...FLOORS[f].fridges);npc=FLOORS[f].npc||NPC0;hid=null;hideAmt=0;hideO=null;sit=null;dlg=null;for(const q in vis)delete vis[q];camX=-1;document.querySelectorAll('#flr button').forEach(b=>b.classList.toggle('on',+b.dataset.f===f))}
 function goFloor(f,w,pos){if(fl||f<0||f>10||f===FLR)return;fl={ph:'out',t:0,to:f,w:w===undefined?p.x<MW/2:w,pos}}
-const northLock=(y,x)=>{if(FLR!==0||y>93)return false;if(objs.some(o=>o.type==='stu'))return true;return y>=15&&y<=87&&x<100};
+const northLock=(y,x)=>{if(typeof netOn==='function'&&netOn())return false;if(FLR!==0||y>93)return false;if(objs.some(o=>o.type==='stu'))return true;return y>=15&&y<=87&&x<100};
 const blocked=(x,y)=>northLock(y,x)||!walk(x,y)||objs.some(o=>o.solid&&x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h);
 function plateCheck(){const o=objs.find(o=>o.type==='plate'&&o.x===p.x&&o.y===p.y);if(o&&o.go<=4&&FLR<=4&&!fl)for(const w of objs)if(w.type==='wolfx'&&performance.now()-(w.hunt||-1e9)<3000){const d=Math.max(Math.abs(w.x-p.x),Math.abs(w.y-p.y));if(d<=16)w.follow={to:o.go,wst:o.wst,pos:o.pos,t:Math.max(600,d*170),f0:FLR}}if(o)goFloor(o.go,o.wst==='g'?'g':!!o.wst,o.pos)}
 function toggleDoor(o){if(o.name==='Cửa ra khỏi trường'&&FLR===0){if(!dlg)dlg={name:'Jaki',text:'Cánh cửa này đang bị khóa, tạm thời chưa mở được.',q:[],n:0};return}if(o.target){const inD=(x,y)=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h;if(inD(p.x,p.y)||inD(p.fx,p.fy))return}o.target=o.target?0:1;o.used=0;o.cl=0}
@@ -824,7 +824,7 @@ function act(){
  {const dq=objs.find(q=>q.decoy&&q.x===fx&&q.y===fy);if(dq){if(!invGive('paint')){say('Túi đã đầy');return}remObj(dq);say('Đã nhặt tranh lại vào túi');try{sfx.blip()}catch(e){}return}}
  if(pzAct())return;
  const o=objs.find(o=>o.type!=='wolfx'&&(o.text||o.type==='door')&&fx>=o.x&&fx<o.x+o.w&&fy>=o.y&&fy<o.y+o.h);
- if(o){if(o.type==='lswitch'){roomOff=!roomOff;try{sfx.blip()}catch(e){}return}if(o.mapCab){mapCabUse(o);return}if(o.type==='cstu'){cstuTalk(o);return}if(o.type==='frn'){frnTalk(o);return}if(o.type==='plant'&&FLR===0&&o.x===117&&o.y===12&&FR.jq==='find'){joyFind();return}if(o.farm||o.fish){lockUse(o);return}if(o.k==='toiletN'||o.k==='toilet')wcBonus();if(o.bin){binUse(o);return}if(o.shop){shopOpen();return}if(o.stove){cookOpen();return}if(o.fr&&o.mine){fridgeOpen(o);return}if(o.k==='chest'){chestUse(o);return}if(o.type==='drop'){if(!invGive(o.id)){say('Túi đã đầy');return}remObj(o);say('Đã nhặt '+ITEMS[o.id].n);return}if(o.k==='sball'&&o.type==='furn'){scGrab(o);return}if(o.k==='ball'&&o.type==='furn'){pickBall(o);return}if(o.type==='stu'){stuTalk(o);return}if(o.locked){dlg={name:o.name,text:o.text,q:[],n:0};return}if(o.sdoor){if(o.wcG&&o.wcG!==wcSex()&&!o.sopen){wcWarn(o.wcG);return}if(o.sopen&&p.x===o.x&&p.y===o.y)return;sdSet(o,!o.sopen);if(o.pair)sdSet(o.pair,o.sopen);sfx.locker(o.sopen);return}if(o.type==='door'){toggleDoor(o);return}if(o.type==='locker'){if(!tp&&!wolfMode&&!aim){if(o.name!=='Tủ sắt (dịch chuyển tới)'){try{sfx.rattle()}catch(e){}dlg={name:'Jaki',text:XT('Tủ này bị khóa rồi, tớ cần có chìa khóa mới mở được.'),q:[],n:0}}else{hid={o,ph:'in',t:0,ex:p.x,ey:p.y,ed:p.dir};o.target=1}}return}if(o.fr){o.target=o.target?0:1;return}if(o.bed){if(!tp&&!aim){const hh=gmin/60;if(DEV_SLEEP_ANY||(hh>=3&&hh<8)){sl={ph:'out',t:0};for(const k in held)held[k]=0}else dlg={name:wolfMode?'Sói':'Jaki',text:'Chưa đến giờ đi ngủ. Phải thức tới sau 3 giờ sáng thì mới sang ngày mới được.',q:[],n:0}}return}const tx=[].concat(o.type==='clock'?clockText():o.race?raceTalk():o.text);if(o.type==='npc'&&!o.seated)o.dir={u:'d',d:'u',l:'r',r:'l'}[p.dir];dlg={name:o.name,text:tx[0],q:tx.slice(1),n:0};if(o.race)dlg.after=raceReady;sfx.blip()}
+ if(o){if(o.type==='lswitch'){roomOff=!roomOff;try{sfx.blip()}catch(e){}return}if(o.mapCab){mapCabUse(o);return}if(o.type==='cstu'){cstuTalk(o);return}if(o.type==='frn'){frnTalk(o);return}if(o.type==='plant'&&FLR===0&&o.x===117&&o.y===12&&FR.jq==='find'){joyFind();return}if(o.farm||o.fish){lockUse(o);return}if(o.k==='toiletN'||o.k==='toilet')wcBonus();if(o.bin){binUse(o);return}if(o.shop){shopOpen();return}if(o.stove){cookOpen();return}if(o.fr&&o.mine){fridgeOpen(o);return}if(o.k==='chest'){chestUse(o);return}if(o.type==='drop'){if(!invGive(o.id)){say('Túi đã đầy');return}remObj(o);say('Đã nhặt '+ITEMS[o.id].n);return}if(o.k==='sball'&&o.type==='furn'){scGrab(o);return}if(o.k==='ball'&&o.type==='furn'){pickBall(o);return}if(o.type==='stu'){stuTalk(o);return}if(o.locked&&!netOn()){dlg={name:o.name,text:o.text,q:[],n:0};return}if(o.sdoor){if(!netOn()&&o.wcG&&o.wcG!==wcSex()&&!o.sopen){wcWarn(o.wcG);return}if(o.sopen&&p.x===o.x&&p.y===o.y)return;sdSet(o,!o.sopen);if(o.pair)sdSet(o.pair,o.sopen);sfx.locker(o.sopen);return}if(o.type==='door'){toggleDoor(o);return}if(o.type==='locker'){if(!tp&&!wolfMode&&!aim){if(o.name!=='Tủ sắt (dịch chuyển tới)'&&!netOn()){try{sfx.rattle()}catch(e){}dlg={name:'Jaki',text:XT('Tủ này bị khóa rồi, tớ cần có chìa khóa mới mở được.'),q:[],n:0}}else{hid={o,ph:'in',t:0,ex:p.x,ey:p.y,ed:p.dir};o.target=1}}return}if(o.fr){o.target=o.target?0:1;return}if(o.bed){if(!tp&&!aim){const hh=gmin/60;if(DEV_SLEEP_ANY||(hh>=3&&hh<8)){sl={ph:'out',t:0};for(const k in held)held[k]=0}else dlg={name:wolfMode?'Sói':'Jaki',text:'Chưa đến giờ đi ngủ. Phải thức tới sau 3 giờ sáng thì mới sang ngày mới được.',q:[],n:0}}return}const tx=[].concat(o.type==='clock'?clockText():o.race?raceTalk():o.text);if(o.type==='npc'&&!o.seated)o.dir={u:'d',d:'u',l:'r',r:'l'}[p.dir];dlg={name:o.name,text:tx[0],q:tx.slice(1),n:0};if(o.race)dlg.after=raceReady;sfx.blip()}
  else{const ch=objs.find(c=>(c.type==='chair'||c.type==='tchair'||c.type==='seat')&&((c.x===fx&&c.y===fy)||(c.x===p.x&&c.y===p.y)));if(ch)sitDown(ch);else if(heldEat()){}else if((sc.held||bb.held)&&autoThrow()){}else if(sc.held)scAct();else if(bb.held)startThrow()}
 }
 
@@ -1093,7 +1093,7 @@ function updParts(dt){for(let i=parts.length-1;i>=0;i--){const q=parts[i];q.l+=d
 function drawParts(){for(const q of parts){g.globalAlpha=Math.max(0,1-Math.max(0,(q.l/q.m-.5)*2));R(q.c,Math.round(q.x),Math.round(q.y),q.s,q.s)}g.globalAlpha=1}
 const zone=(x,y)=>{const k=kind[y][x];if(k===2)return 'H';if(k===3)return 'D';const a=ar(x,y);return k===4&&a!=='O'?'g'+a:a};
 const wcSex=()=>CH==='maya'?'f':'m';
-const wcBad=(x,y)=>{if(FLR>6)return false;const a=areaAt(x,y);return a==='W0'?wcSex()!=='m':a==='W1'?wcSex()!=='f':false};
+const wcBad=(x,y)=>{if(FLR>6||netOn())return false;const a=areaAt(x,y);return a==='W0'?wcSex()!=='m':a==='W1'?wcSex()!=='f':false};
 const wcWarn=(g)=>{const n=performance.now();if(n-(wcWarn.t||0)<4000)return;wcWarn.t=n;dlg={name:CHARS[CH].n,text:'Đây là nhà vệ sinh '+(g==='m'?'nam':'nữ')+', tớ không vào đó được.',q:[],n:0}};
 const okTarget=(x,y)=>{if(wcBad(x,y)||!walk(x,y)||kind[y][x]===3||(blocked(x,y)&&!(actLv()>=2&&npcAt(x,y)))||(x===p.x&&y===p.y))return false;const pz=zone(p.x,p.y),tz=zone(x,y),gk=(z,xx,yy)=>FLR===0&&yy>=88&&yy<=111&&(z==='H'||z==='L4'||z==='R4'||z==='gL4'||z==='gR4'||(z==='O'&&xx>=88&&xx<=99));const base=pz==='D'?(tz==='H'||tz===ar(p.x,p.y)):(pz===tz||(gk(pz,p.x,p.y)&&gk(tz,x,y)));return base||peekVis(x,y)>.05};
 function toggleAim(){if(menuOpen||(cs&&cs.lock))return;if(CH==='maya'){mScan();return}if(CH==='yasu'){if(ry)rhythmHit();else yasuSkill();return}if(!CHARS[CH].tp){pop(p.x*T+16,p.y*T-44,CHARS[CH].n+' chưa có kỹ năng dịch chuyển','#cfcfcf');return}if(bb.mode){bb.mode=null;return}if(aim){aim=false;return}if(wolfMode||dlg||tp||hid||sit)return;if(FLR===7&&gateSt===1){sfx.deny();deny=600;dlg={name:'Jaki',text:'Vẫn không dịch chuyển được ở đây... Chắc có thứ gì đó đang chặn.',q:[],n:0};return}if(!(stam>=3&&!exh)){deny=600;sfx.deny();return}aim=true;aimT=null}
@@ -2060,12 +2060,10 @@ function renderMenu(){
  }else if(scr==='how'){
   h+='<div class="mh">Cách chơi</div>'+keysHtml()+'<button data-a="back">Xong</button>';
  }else if(scr==='net'){
-  h+='<div class="mh">Chơi mạng</div><div class="ms">'+(NET.msg||'Nhập mã phòng giống nhau để vào cùng một sân trường. Ai cũng chọn được nhân vật, trùng cũng được.')+'</div>'
-  +'<div class="mr"><b>Mã phòng</b><input id="netcode" maxlength="24" value="'+NET.code.replace(/[^a-z0-9_.-]/gi,'')+'" style="width:140px"></div>'
+  h+='<div class="mh">Chơi mạng</div><div class="ms">'+(NET.msg||'Chọn tên, màu và nhân vật rồi bấm Vào phòng. Bạn sẽ được xếp vào sân trường chung với những người khác. Ai cũng chọn được nhân vật, trùng cũng được.')+'</div>'
   +'<div class="mr"><b>Tên hiển thị</b><input id="netname" maxlength="14" value="'+NET.name.replace(/[<>&"]/g,'')+'" style="width:140px"></div>'
   +'<div class="mr"><b>Màu tên</b><span>'+NETCOLS.map(c=>'<button data-a="netcol" data-k="'+c+'" style="width:26px;height:26px;padding:0;margin:0 2px;background:'+c+';border:'+(NET.col===c?'3px solid #fff':'2px solid #555')+'"></button>').join('')+'</span></div>'
   +'<button data-a="netch">Nhân vật: '+netName(NET.skin)+' (bấm để đổi)</button>'
-  +'<button data-a="netcap">Số người tối đa: '+NET.cap+'</button>'
   +'<button data-a="netgo"'+(NET.busy?' disabled':'')+'>Vào phòng</button><button data-a="back">Quay lại</button>';
  }else if(scr==='quit'){
   h+='<div class="mh">Thoát</div><div class="ms">Cảm ơn bạn đã chơi! Hãy đóng tab trình duyệt để thoát game.</div><button data-a="back">Quay lại</button>';
@@ -3685,7 +3683,7 @@ if(!window.claude){
   ws.onerror=()=>fin(rej,{code:'upstream_error',message:'Không nối được máy chủ'});
   ws.onclose=()=>{fire('sys',{data:{x:'Mất kết nối với máy chủ.'}});fin(rej,{code:'upstream_error',message:'Mất kết nối'})};
   ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){return}
-   if(m.t==='hi'){me=m.id;clearTimeout(timer);fin(res,{name,
+   if(m.t==='hi'){me=m.id;clearTimeout(timer);fin(res,{name,cap:m.cap,
      peers:()=>list.map(a=>({peer:a[0],isMe:a[0]===me,sameTab:a[0]===me,kind:'viewer',guest:false,by:null,presence:{n:a[1],ch:a[2],f:a[3],x:a[4],y:a[5],d:a[6],m:a[7],c:a[8],s:a[9],r:a[10],l:a[11]}})),
      presence:async p=>{if(ws.readyState===1)ws.send(JSON.stringify({t:'p',d:p}))},
      emit:async(tp,d)=>{if(ws.readyState!==1)return;if(tp==='chat')ws.send(JSON.stringify({t:'c',x:d&&d.x}));else if(tp==='emo')ws.send(JSON.stringify({t:'e',x:d&&d.x}))},
@@ -3702,7 +3700,7 @@ function netOn(){return typeof NET!=='undefined'&&NET.on}
 const NETCOLS=['#ffe58a','#ff8a8a','#8affb0','#8ad0ff','#d9a0ff','#ffb35c','#ffffff','#ff7ad9'];
 const NETEMO=['👍','😂','❤️','😮','😢','😡','👋','🎉'];
 const NETSK=[{id:'jaki',n:'Jaki',sk:1},{id:'maya',n:'Maya',sk:1},{id:'yasu',n:'Yasu',sk:1},{id:'steve',n:'Steve'},{id:'vali',n:'Vali'},{id:'joy',n:'Joy'},{id:'kayli',n:'Kayli'},{id:'boxy',n:'Boxy'},{id:'nelson',n:'Nelson'},{id:'tidus',n:'Tidus'},{id:'luke',n:'Luke'},{id:'masta',n:'Masta'},{id:'lena',n:'Lena'},{id:'isabel',n:'Isabel'},{id:'carrot',n:'Mr Cà Rốt'}];
-const NET={col:'#ffe58a',on:false,room:null,acts:new Map(),cap:30,code:'san',name:'Khách'+(100+Math.floor(Math.random()*900)),skin:'jaki',msg:'',busy:false,skins:{},lastSend:0,lastKey:'',chats:new Map(),emos:new Map(),log:[],lastChat:0,subs:[],pick:null};
+const NET={col:'#ffe58a',on:false,room:null,acts:new Map(),cap:30,code:'1',name:'Khách'+(100+Math.floor(Math.random()*900)),skin:'jaki',msg:'',busy:false,skins:{},lastSend:0,lastKey:'',chats:new Map(),emos:new Map(),log:[],lastChat:0,subs:[],pick:null};
 const netBase=id=>['jaki','maya','yasu'].includes(id)?id:'jaki';
 function netSkinSrc(id){if(id==='carrot')return tskin.src;if(PORTB64[id])return 'data:image/png;base64,'+PORTB64[id];return SKINS[id]||SKINS.jaki}
 function netSkin(id){if(!NET.skins[id]){const im=new Image();im.src=netSkinSrc(id);NET.skins[id]=im}return NET.skins[id]}
@@ -3714,6 +3712,7 @@ function netApplySkin(id){NET.skin=id;const b=netBase(id);if(CH!==b){const f=FLR
  try{const m=document.getElementById('mpb');if(m)m.style.display=''}catch(e){}}
 // ---------- CSS ----------
 {const st=document.createElement('style');st.textContent=`
+body.neton h1,body.neton #wrap+p{display:none!important}@media (pointer:fine){body.neton #wrap{margin-top:46px}}
 body.neton #flr,body.neton #sw,body.neton [data-a="mdv"],body.neton #top{display:none!important}
 #netbar{position:fixed;top:6px;left:6px;z-index:60;background:rgba(10,12,24,.88);color:#fff;font:600 12px "Be Vietnam Pro",sans-serif;padding:5px 7px;border:2px solid #e0b84a;display:flex;gap:5px;align-items:center;flex-wrap:wrap;max-width:94vw}
 #netbar button{font:inherit;padding:3px 8px;border:1px solid #888;background:#26283a;color:#fff;cursor:pointer}
@@ -3787,11 +3786,16 @@ async function netJoin(){
   const cl=window.claude;const room=cl&&await cl.use('room');
   if(!room){NET.msg='Không kết nối được. Trang này cần bạn đăng nhập và được mời vào để dùng phòng chơi mạng.';return}
   NET.name=NETF.clean(NET.name,14)||'Khách';if(NETF.bad(NET.name))NET.name='Khách'+(100+Math.floor(Math.random()*900));
-  const code=(NET.code||'san').toLowerCase().replace(/[^a-z0-9_.-]/g,'').slice(0,24)||'san';NET.code=code;
-  const r=await room.join('s-'+code);
-  await new Promise(res=>setTimeout(res,1800));
-  const others=r.peers().filter(q=>q.kind==='viewer'&&!q.isMe).length;
-  if(others>=NET.cap-1){try{await r.leave()}catch(e){}NET.msg='Phòng đã đầy ('+others+'/'+NET.cap+' người).';return}
+  // tự xếp vào phòng đầu tiên còn chỗ (Phòng 1, 2, 3...)
+  let r=null,found=0;
+  for(let i=1;i<=30&&!r;i++){
+   let t=null;try{t=await room.join('s-san-'+i)}catch(e){if(e&&e.code==='limit_reached'&&window.claude&&!t&&i<30){continue}throw e}
+   const cap=t.cap||30;await new Promise(res=>setTimeout(res,i===1?1800:900));
+   const others=t.peers().filter(q=>q.kind==='viewer'&&!q.isMe).length;
+   if(others>=cap-1){try{await t.leave()}catch(e){}continue}
+   r=t;found=i;NET.cap=cap}
+  if(!r){NET.msg='Tất cả các phòng đang đầy, thử lại sau nhé.';return}
+  NET.code=String(found);
   NET.room=r;NET.on=true;NET.msg='';document.body.classList.add('neton');
   {const _si=startIntro;startIntro=function(){};chooseChar(netBase(NET.skin));setTimeout(()=>{startIntro=_si},900)}
   devRoomState();BELL.done=true;introPending=false;cs=null;dlg=null;tut=null;try{MS.letter=null;MS.room=null;setMis(null);renderMisP()}catch(e){}
@@ -3811,7 +3815,7 @@ function netBar(){let d=document.getElementById('netbar');if(!d){d=document.crea
    if(k==='emo'){const r=b.getBoundingClientRect(),m=netDom.emo;m.style.display=m.style.display==='flex'?'none':'flex';m.style.left=Math.max(4,r.left)+'px';m.style.top=(r.bottom+6)+'px';return}
    if(k==='ch'){netPickOpen(id=>{if(id===NET.skin)return;netApplySkin(id);netSend(true);netBar();try{cv.focus()}catch(_){}});return}})}
  const n=NET.room?NET.room.peers().filter(q=>q.kind==='viewer').length:0;
- d.innerHTML='<span>🌐 '+NET.code+' · '+n+'/'+NET.cap+'</span><button data-k="chat" title="Chat (C)">💬 Chat</button><button data-k="emo">😀</button><button data-k="ch">🧑 '+netName(NET.skin)+'</button><button data-k="quit" style="background:#5a2222">Thoát</button>'}
+ d.innerHTML='<span>🌐 Phòng '+NET.code+' · '+n+'/'+NET.cap+'</span><button data-k="chat" title="Chat (C)">💬 Chat</button><button data-k="emo">😀</button><button data-k="ch">🧑 '+netName(NET.skin)+'</button><button data-k="quit" style="background:#5a2222">Thoát</button>'}
 // ---------- gửi / nhận vị trí ----------
 function netSend(force){if(!NET.on||!NET.room)return;const t=p.mv?p.t:0,x=+(p.x+(p.fx-p.x)*t).toFixed(2),y=+(p.y+(p.fy-p.y)*t).toFixed(2),st=hid?'h':(typeof lie!=='undefined'&&lie)?'h':sit?'s':wolfMode?'w':'',rn=p.run&&p.mv?1:0,lp=p.lp?1:0,k=[NET.skin,FLR,x,y,p.dir,p.mv?1:0,NET.col,st,rn,lp].join();const now=performance.now();if(!force&&(k===NET.lastKey||now-NET.lastSend<120))return;NET.lastKey=k;NET.lastSend=now;NET.room.presence({s:st,r:rn,l:lp,n:(NET.name||'Khách').slice(0,14),c:NET.col,ch:NET.skin,f:FLR,x,y,d:p.dir,m:p.mv?1:0}).catch(()=>{})}
 function netPeers(){return NET.room?NET.room.peers().filter(q=>q.kind==='viewer'&&!q.isMe&&q.presence&&q.presence.ch):[]}
@@ -3843,6 +3847,18 @@ function netDotsMini(tx,ty){for(const q of netPeers()){const pr=q.presence;if(pr
 function netDotsBig(mx,my){g.save();g.font='bold 11px "Be Vietnam Pro","Noto Sans",sans-serif';g.textAlign='center';for(const q of netPeers()){const pr=q.presence;if(pr.f!==mapFl||pr.s==='h')continue;const col=/^#[0-9a-f]{6}$/i.test(pr.c||'')?pr.c:'#ffe58a';g.fillStyle=col;g.strokeStyle='#000';g.lineWidth=2;g.beginPath();g.arc(mx(pr.x+.5),my(pr.y+.5),4,0,6.283);g.fill();g.stroke();let n=NETF.clean(pr.n,14)||'?';if(NETF.bad(n))n='Khách';g.lineWidth=3;g.strokeStyle='#000';g.fillStyle='#fff';g.strokeText(n,mx(pr.x+.5),my(pr.y+.5)-8);g.fillText(n,mx(pr.x+.5),my(pr.y+.5)-8)}g.restore()}
 setInterval(()=>{if(!NET.on)return;try{netSync();netSend(false)}catch(e){}},50);
 setInterval(()=>{if(NET.on)try{netBar()}catch(e){}},2000);
+
+// bố cục (máy tính): thanh nút nằm ngay trên màn game, chat ngay dưới màn game
+function netLayout(){try{
+ if(matchMedia('(pointer:coarse)').matches)return;
+ const c=document.getElementById('c');if(!c||!NET.on)return;const r=c.getBoundingClientRect();
+ const bar=document.getElementById('netbar'),ch=document.getElementById('netchat');
+ if(bar){bar.style.left=Math.max(0,r.left)+'px';bar.style.top=Math.max(0,r.top-bar.offsetHeight-4)+'px'}
+ if(ch){const room=innerHeight-r.bottom;ch.style.width=Math.min(r.width,innerWidth-12)+'px';ch.style.left=Math.max(6,r.left)+'px';
+  if(room>110){ch.style.top=(r.bottom+6)+'px';ch.style.bottom='auto';ch.querySelector('#netlog').style.justifyContent='flex-start'}
+  else{ch.style.top='auto';ch.style.bottom='6px'}}
+}catch(_){}}
+setInterval(netLayout,200);addEventListener('resize',netLayout);
 </script>
 <!-- v-breath -->
 </body>
