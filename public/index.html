@@ -3829,7 +3829,10 @@ function netSync(){if(!NET.on||!NET.room)return;const now=performance.now();cons
   if(!objs.includes(o))objs.push(o);
   o.col=/^#[0-9a-f]{6}$/i.test(pr.c||'')?pr.c:'#ffe58a';o.st=pr.s||'';o.lp=!!pr.l;o.nch=NETSK.some(s=>s.id===pr.ch)?pr.ch:'jaki';
   {let n=NETF.clean(pr.n,14)||'?';if(NETF.bad(n))n='Khách';o.name=n}
-  o.dir=pr.d||o.dir;const tx=pr.x*T,ty=pr.y*T,dx=tx-o.px,dy=ty-o.py;
+  o.dir=pr.d||o.dir;let tx=pr.x*T,ty=pr.y*T;
+  if(o.lx!==tx||o.ly!==ty){if(o.lt!==undefined){const w=Math.max(30,now-o.lt);o.vx=Math.max(-14*T,Math.min(14*T,(tx-o.lx)/w*1000));o.vy=Math.max(-14*T,Math.min(14*T,(ty-o.ly)/w*1000))}o.lx=tx;o.ly=ty;o.lt=now}
+  if(pr.m&&now-o.lt<400){const ah=Math.min(0.22,(now-o.lt)/1000+0.12);tx+=(o.vx||0)*ah;ty+=(o.vy||0)*ah}else{o.vx=o.vy=0}
+  const dx=tx-o.px,dy=ty-o.py;
   if(Math.hypot(dx,dy)>6*T){o.px=tx;o.py=ty}else{o.px+=dx*kk;o.py+=dy*kk}
   o.x=Math.round(o.px/T);o.y=Math.round(o.py/T);o.step=(o.st==='s')?0:(pr.m||Math.hypot(dx,dy)>3)?[1,0,-1,0][Math.floor(now/(pr.r?85:130))%4]:0}}
 // ---------- vẽ tên, chat, emoji ----------
