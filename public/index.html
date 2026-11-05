@@ -722,12 +722,12 @@ for(const fl of FLOORS){fl.objs=fl.objs.filter(o=>!(o.x>=TRX0&&o.x<=TRX1&&o.y>=T
 FLOORS[0].objs=FLOORS[0].objs.filter(o=>!(o.type==='oak'&&o.x===44&&o.y===105));
 function setFloor(f){scDropAll();FLR=f;if(f===2)mrHide=false;genkan(f);objs.length=0;objs.push(...FLOORS[f].objs);if(f===2){FLOORS[2].npc=null;npc=NPC0;for(const arr of [objs,FLOORS[2].objs])for(let i=arr.length-1;i>=0;i--)if(arr[i].type==='npc'&&arr[i].name==='Mr Cà Rốt')arr.splice(i,1);if(!objs.some(o=>o.type==='cstu')){try{addClassStudents()}catch(e){}}}doors.length=0;doors.push(...FLOORS[f].doors);lockers.length=0;lockers.push(...FLOORS[f].lockers);fridges.length=0;fridges.push(...FLOORS[f].fridges);npc=FLOORS[f].npc||NPC0;hid=null;hideAmt=0;hideO=null;sit=null;dlg=null;for(const q in vis)delete vis[q];camX=-1;document.querySelectorAll('#flr button').forEach(b=>b.classList.toggle('on',+b.dataset.f===f))}
 function goFloor(f,w,pos){if(fl||f<0||f>10||f===FLR)return;fl={ph:'out',t:0,to:f,w:w===undefined?p.x<MW/2:w,pos}}
-const northLock=(y,x)=>{if(typeof netOn==='function'&&netOn())return false;if(FLR!==0||y>93)return false;if(objs.some(o=>o.type==='stu'))return true;return y>=15&&y<=87&&x<100};
+const northLock=(y,x)=>{if(typeof netOn==='function'&&netOn())return false;if(FLR!==0||y>93)return false;if(csAway||gday>0)return false;if(objs.some(o=>o.type==='stu'))return true;return y>=15&&y<=87&&x<100};
 const blocked=(x,y)=>northLock(y,x)||!walk(x,y)||objs.some(o=>o.solid&&x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h);
 function plateCheck(){const o=objs.find(o=>o.type==='plate'&&o.x===p.x&&o.y===p.y);if(o&&o.go<=4&&FLR<=4&&!fl)for(const w of objs)if(w.type==='wolfx'&&performance.now()-(w.hunt||-1e9)<3000){const d=Math.max(Math.abs(w.x-p.x),Math.abs(w.y-p.y));if(d<=16)w.follow={to:o.go,wst:o.wst,pos:o.pos,t:Math.max(600,d*170),f0:FLR}}if(o)goFloor(o.go,o.wst==='g'?'g':!!o.wst,o.pos)}
 function toggleDoor(o){if(o.name==='Cửa ra khỏi trường'&&FLR===0){if(!dlg)dlg={name:'Jaki',text:'Cánh cửa này đang bị khóa, tạm thời chưa mở được.',q:[],n:0};return}if(o.target){const inD=(x,y)=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h;if(inD(p.x,p.y)||inD(p.fx,p.fy))return}o.target=o.target?0:1;o.used=0;o.cl=0}
 function updDoors(dt){const WX=netOn()?[]:null;for(const d of doors){
- const inD=(x,y)=>x>=d.x&&x<d.x+d.w&&y>=d.y&&y<d.y+d.h,wi=WX?false:objs.some(o=>o.type==='wolfx'&&d.x<o.x+WS&&d.x+d.w>o.x&&d.y<o.y+WS&&d.y+d.h>o.y),wn=WX?false:objs.some(o=>o.type==='wolfx'&&Math.hypot(o.x-d.x,o.y-d.y)<=4),inside=inD(p.x,p.y)||inD(p.fx,p.fy)||wi;
+ const inD=(x,y)=>x>=d.x&&x<d.x+d.w&&y>=d.y&&y<d.y+d.h,wi=WX?false:objs.some(o=>o.type==='wolfx'&&d.x<o.x+WS&&d.x+d.w>o.x&&d.y<o.y+WS&&d.y+d.h>o.y),wn=WX?false:objs.some(o=>o.type==='wolfx'&&Math.hypot(o.x-d.x,o.y-d.y)<=4),inside=inD(p.x,p.y)||inD(p.fx,p.fy)||wi||objs.some(o=>o.type==='rmn'&&Math.hypot(o.x-d.x,o.y-d.y)<=1.6);
  if(d.target===1){if(inside){d.used=1;d.cl=0}else if(!wn&&!d.hold&&(d.used||Math.hypot(p.x-d.x,p.y-d.y)>4)){d.cl=(d.cl||0)+dt;if(d.cl>150){d.target=0;d.used=0;d.cl=0}}}
  if(d._pt!==undefined&&d._pt!==d.target)sfx.door(d.target,sfx.dist(d.x,d.y));d._pt=d.target;
  d.open=Math.max(0,Math.min(1,d.open+(d.target?dt:-dt)/90));d.solid=!(d.target===1)}}
@@ -824,7 +824,7 @@ function act(){
  {const dq=objs.find(q=>q.decoy&&q.x===fx&&q.y===fy);if(dq){if(!invGive('paint')){say('Túi đã đầy');return}remObj(dq);say('Đã nhặt tranh lại vào túi');try{sfx.blip()}catch(e){}return}}
  if(pzAct())return;
  const o=objs.find(o=>o.type!=='wolfx'&&(o.text||o.type==='door')&&fx>=o.x&&fx<o.x+o.w&&fy>=o.y&&fy<o.y+o.h);
- if(o){if(o.type==='lswitch'){roomOff=!roomOff;try{sfx.blip()}catch(e){}return}if(o.mapCab){mapCabUse(o);return}if(o.type==='cstu'){cstuTalk(o);return}if(o.type==='frn'){frnTalk(o);return}if(o.type==='plant'&&FLR===0&&o.x===117&&o.y===12&&FR.jq==='find'){joyFind();return}if(o.farm||o.fish){lockUse(o);return}if(o.k==='toiletN'||o.k==='toilet')wcBonus();if(o.bin){binUse(o);return}if(o.shop){shopOpen();return}if(o.stove){cookOpen();return}if(o.fr&&o.mine){fridgeOpen(o);return}if(o.k==='chest'){chestUse(o);return}if(o.type==='drop'){if(!invGive(o.id)){say('Túi đã đầy');return}remObj(o);say('Đã nhặt '+ITEMS[o.id].n);return}if(o.k==='sball'&&o.type==='furn'){scGrab(o);return}if(o.k==='ball'&&o.type==='furn'){pickBall(o);return}if(o.type==='stu'){stuTalk(o);return}if(o.locked&&!netOn()){dlg={name:o.name,text:o.text,q:[],n:0};return}if(o.sdoor){if(!netOn()&&o.wcG&&o.wcG!==wcSex()&&!o.sopen){wcWarn(o.wcG);return}if(o.sopen&&p.x===o.x&&p.y===o.y)return;sdSet(o,!o.sopen);if(o.pair)sdSet(o.pair,o.sopen);sfx.locker(o.sopen);return}if(o.type==='door'){toggleDoor(o);return}if(o.type==='locker'){if(!tp&&!wolfMode&&!aim){if(o.name!=='Tủ sắt (dịch chuyển tới)'&&!netOn()){try{sfx.rattle()}catch(e){}dlg={name:'Jaki',text:XT('Tủ này bị khóa rồi, tớ cần có chìa khóa mới mở được.'),q:[],n:0}}else{hid={o,ph:'in',t:0,ex:p.x,ey:p.y,ed:p.dir};o.target=1}}return}if(o.fr){o.target=o.target?0:1;return}if(o.bed){if(!tp&&!aim){const hh=gmin/60;if(DEV_SLEEP_ANY||(hh>=3&&hh<8)){sl={ph:'out',t:0};for(const k in held)held[k]=0}else dlg={name:wolfMode?'Sói':'Jaki',text:'Chưa đến giờ đi ngủ. Phải thức tới sau 3 giờ sáng thì mới sang ngày mới được.',q:[],n:0}}return}const tx=[].concat(o.type==='clock'?clockText():o.race?raceTalk():o.text);if(o.type==='npc'&&!o.seated)o.dir={u:'d',d:'u',l:'r',r:'l'}[p.dir];dlg={name:o.name,text:tx[0],q:tx.slice(1),n:0};if(o.race)dlg.after=raceReady;sfx.blip()}
+ if(o){if(o.type==='lswitch'){roomOff=!roomOff;try{sfx.blip()}catch(e){}return}if(o.mapCab){mapCabUse(o);return}if(o.type==='cstu'){cstuTalk(o);return}if(o.type==='rmn'){rmnTalk(o);return}if(o.type==='frn'){frnTalk(o);return}if(o.type==='plant'&&FLR===0&&o.x===117&&o.y===12&&FR.jq==='find'){joyFind();return}if(o.farm||o.fish){lockUse(o);return}if(o.k==='toiletN'||o.k==='toilet')wcBonus();if(o.bin){binUse(o);return}if(o.shop){shopOpen();return}if(o.stove){cookOpen();return}if(o.fr&&o.mine){fridgeOpen(o);return}if(o.k==='chest'){chestUse(o);return}if(o.type==='drop'){if(!invGive(o.id)){say('Túi đã đầy');return}remObj(o);say('Đã nhặt '+ITEMS[o.id].n);return}if(o.k==='sball'&&o.type==='furn'){scGrab(o);return}if(o.k==='ball'&&o.type==='furn'){pickBall(o);return}if(o.type==='stu'){stuTalk(o);return}if(o.locked&&!netOn()){dlg={name:o.name,text:o.text,q:[],n:0};return}if(o.sdoor){if(!netOn()&&o.wcG&&o.wcG!==wcSex()&&!o.sopen){wcWarn(o.wcG);return}if(o.sopen&&p.x===o.x&&p.y===o.y)return;sdSet(o,!o.sopen);if(o.pair)sdSet(o.pair,o.sopen);sfx.locker(o.sopen);return}if(o.type==='door'){toggleDoor(o);return}if(o.type==='locker'){if(!tp&&!wolfMode&&!aim){if(o.name!=='Tủ sắt (dịch chuyển tới)'&&!netOn()){try{sfx.rattle()}catch(e){}dlg={name:'Jaki',text:XT('Tủ này bị khóa rồi, tớ cần có chìa khóa mới mở được.'),q:[],n:0}}else{hid={o,ph:'in',t:0,ex:p.x,ey:p.y,ed:p.dir};o.target=1}}return}if(o.fr){o.target=o.target?0:1;return}if(o.bed){if(!tp&&!aim){const hh=gmin/60;if(DEV_SLEEP_ANY||(hh>=3&&hh<8)){sl={ph:'out',t:0};for(const k in held)held[k]=0}else dlg={name:wolfMode?'Sói':'Jaki',text:'Chưa đến giờ đi ngủ. Phải thức tới sau 3 giờ sáng thì mới sang ngày mới được.',q:[],n:0}}return}const tx=[].concat(o.type==='clock'?clockText():o.race?raceTalk():o.text);if(o.type==='npc'&&!o.seated)o.dir={u:'d',d:'u',l:'r',r:'l'}[p.dir];dlg={name:o.name,text:tx[0],q:tx.slice(1),n:0};if(o.race)dlg.after=raceReady;sfx.blip()}
  else{const ch=objs.find(c=>(c.type==='chair'||c.type==='tchair'||c.type==='seat')&&((c.x===fx&&c.y===fy)||(c.x===p.x&&c.y===p.y)));if(ch)sitDown(ch);else if(heldEat()){}else if((sc.held||bb.held)&&autoThrow()){}else if(sc.held)scAct();else if(bb.held)startThrow()}
 }
 
@@ -1046,7 +1046,7 @@ function drawBBhud(){
  if(FLR===1&&p.x>=GYMX&&p.x<=GYMR&&p.y>=GYMY&&p.y<=GYMB&&bb.shots>0){const x=W*T-112,y=8;R('rgba(20,22,40,.82)',x,y,104,24);g.font='bold 13px "Be Vietnam Pro","Noto Sans",sans-serif';g.fillStyle='#f4f0e6';g.fillText('Vào rổ: '+bb.score+'/'+bb.shots,x+10,y+16)}
  if(bb.msg){const a=Math.min(1,bb.msg.t/400);g.globalAlpha=a;g.font='bold 16px "Be Vietnam Pro","Noto Sans",sans-serif';g.textAlign='center';let tw=g.measureText(bb.msg.text).width;if(tw>W*T-50){g.font='bold '+Math.max(9,Math.floor(16*(W*T-50)/tw))+'px "Be Vietnam Pro","Noto Sans",sans-serif';tw=g.measureText(bb.msg.text).width}R('rgba(20,22,40,.85)',W*T/2-tw/2-12,52,tw+24,28);g.fillStyle='#ffe6a8';g.fillText(bb.msg.text,W*T/2,72);g.textAlign='left';g.globalAlpha=1}}
 function sdSet(o,v){o.sopen=v;o.solid=v?0:1;o.k=v?(o.ko||'stallDo'):(o.kc||'stallD');o.ct=0}
-setInterval(()=>{for(const o of objs)if(o.sdoor&&o.sopen){const q=o.pair;const on=(p.x===o.x&&p.y===o.y)||(p.fx===o.x&&p.fy===o.y)||(q&&((p.x===q.x&&p.y===q.y)||(p.fx===q.x&&p.fy===q.y)));if(on){o.ct=0;continue}o.ct=(o.ct||0)+50;if(o.ct>=350){sdSet(o,false);if(q)sdSet(q,false);sfx.locker(false,.6)}}},50);
+setInterval(()=>{for(const o of objs)if(o.sdoor&&o.sopen){const q=o.pair;const on=(p.x===o.x&&p.y===o.y)||(p.fx===o.x&&p.fy===o.y)||(q&&((p.x===q.x&&p.y===q.y)||(p.fx===q.x&&p.fy===q.y)));if(on){o.ct=0;continue}const nr=Math.min(Math.hypot(p.fx-o.x,p.fy-o.y),q?Math.hypot(p.fx-q.x,p.fy-q.y):9)<=2.3;o.ct=(o.ct||0)+50;if(o.ct>=(nr?2500:350)){sdSet(o,false);if(q)sdSet(q,false);sfx.locker(false,.6)}}},50);
 function sitDown(c){if(tp||aim)return;if(wolfMode){dlg={name:'Sói',text:'Sói không ngồi ghế được.',q:[],n:0};return}
  if(c.type==='tchair'&&npc.x===c.x&&npc.y===c.y)return;
  p.x=p.fx=c.x;p.y=p.fy=c.y;p.mv=0;p.dir=c.sd||((c.type==='chair'||c.sitU)?'u':'d');sit={o:c};sfx.sit()}
@@ -1502,7 +1502,7 @@ function update(dt){
  if(pk){updPK(dt);return}
  hpTick(dt);
  updParts(dt);updBB(dt*timeSc);updSC(dt*timeSc);if(hitFl>0)hitFl-=dt;for(let i=pops.length-1;i>=0;i--){pops[i].t+=dt;if(pops[i].t>1400)pops.splice(i,1)}trailRec();if(!dlg&&!cs&&!sl&&!tp&&!ry)updWolves(dt*timeSc);chaseTick(dt);if(!fl&&!cs&&!sl)updWolfFollow(dt);for(const o of objs)if(o.type==='saloon'){const near=Math.abs(p.fx-o.x)<=1&&Math.abs(p.x-o.x)<=1&&p.fy>=o.y-0&&p.fy<=o.y+o.h-1,side=(p.fx+p.x)/2<o.x?1:-1,tg=near&&(p.mv||Math.abs(p.x-o.x)===0)?.9*side:0;o.v+=((tg-o.a)*.0011-o.v*.011)*dt;o.a+=o.v*dt;if(Math.abs(o.a)<.002&&Math.abs(o.v)<.0005){o.a=0;o.v=0}}
-try{updScn(dt)}catch(e){}updDoors(dt);for(const l of lockers){if(l._pt!==undefined&&l._pt!==l.target)sfx.locker(l.target,sfx.dist(l.x,l.y));l._pt=l.target}for(const l of lockers)l.open=Math.max(0,Math.min(1,l.open+(l.target?dt:-dt)/150));hideAmt=Math.max(0,Math.min(1,hideAmt+((hid&&hid.ph==='hidden')?dt:-dt)/320));if(hid)hideO=hid.o;
+try{updScn(dt)}catch(e){}try{updRoam(dt)}catch(e){}updDoors(dt);for(const l of lockers){if(l._pt!==undefined&&l._pt!==l.target)sfx.locker(l.target,sfx.dist(l.x,l.y));l._pt=l.target}for(const l of lockers)l.open=Math.max(0,Math.min(1,l.open+(l.target?dt:-dt)/150));hideAmt=Math.max(0,Math.min(1,hideAmt+((hid&&hid.ph==='hidden')?dt:-dt)/320));if(hid)hideO=hid.o;
 if(deny>0)deny-=dt;if(aimDeny>0)aimDeny-=dt;if(dlg||wolfMode)aim=false;
  if(tp){tp.t+=dt;portal(p.x*T+16,p.y*T+T-2,1);if(tp.t>=TPD){if(tp.phase==='out'){p.x=p.fx=tp.to.x;p.y=p.fy=tp.to.y;p.mv=0;skAfterTp();tp.phase='in';tp.t=0;sfx.tpIn();portal(p.x*T+16,p.y*T+T-2,22)}else tp=null}return}
  if(dr){updDraw(dt);return}if(ry){updPunch(dt);return}
@@ -1520,7 +1520,7 @@ if(deny>0)deny-=dt;if(aimDeny>0)aimDeny-=dt;if(dlg||wolfMode)aim=false;
   return}
  if(p.mv){p.t+=dt*(BF.spd>0&&!p.lp?1.3:1)/(p.lp?p.lp:p.run?(pasL3()===1?60:90):exh?280:170);if(p.t>=1){p.x=p.fx;p.y=p.fy;p.mv=0;if(p.lp){p.lp=0;try{mLand()}catch(e){}}p.alt=!p.alt;sfx.step(p.run,kind[p.y][p.x]);plateCheck()}return}
  let d=(cs&&cs.lock)?cs.dir:dirNow();if(d&&!(cs&&cs.lock)&&tutLock())d=null;
- if(d){p.dir=d;const nx=p.x+V[d][0],ny=p.y+V[d][1];if(!(cs&&cs.lock)&&wcBad(nx,ny)){wcWarn(wcSex()==='m'?'f':'m')}else if(!blocked(nx,ny)){p.fx=nx;p.fy=ny;p.mv=1;p.t=0}else if(d==='u'&&northLock(ny,nx)&&!(cs&&cs.lock)){const n=performance.now();if(n-dkT>5000){dkT=n;dlg={name:'Jaki',text:'Ôi, phía bên này tối quá, đi theo đường hành lang thôi.',q:[],n:0}}}}
+ if(d){p.dir=d;const nx=p.x+V[d][0],ny=p.y+V[d][1];if(!(cs&&cs.lock)&&wcBad(nx,ny)){wcWarn(wcSex()==='m'?'f':'m')}else if(!blocked(nx,ny)){p.fx=nx;p.fy=ny;p.mv=1;p.t=0}else if(d==='u'&&northLock(ny,nx)&&!(cs&&cs.lock)){const n=performance.now();if(n-dkT>5000){dkT=n;dlg={name:'Jaki',text:XT('Ôi, phía bên này tối quá, đi theo đường hành lang thôi.'),q:[],n:0}}}}
 }
 const R=(c,x,y,w,h)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
 const rng=s=>()=>((s=(s*1664525+1013904223)>>>0)/4294967296);
@@ -2801,13 +2801,13 @@ let PZ={d:-1,ids:[],done:[]};try{const j=JSON.parse(localStorage.getItem('lh_pz'
 const pzSave=()=>{try{localStorage.setItem('lh_pz',JSON.stringify(PZ))}catch(e){}};
 function pzNewDay(){const sx=wcSex();const sp=PZ_SPOTS.map((s,i)=>Object.assign({i},s)).filter(s=>!(s.a==='scrub'&&((s.z==='W0'&&sx==='f')||(s.z==='W1'&&sx==='m'))));
  const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}return a};
- const areas=shuf([...new Set(sp.map(s=>s.f+s.z))]);const on=[];let cnt=0;for(const a of areas){on.push(a);cnt+=sp.filter(s=>s.f+s.z===a).length;if(cnt>=110&&new Set(sp.filter(s=>on.includes(s.f+s.z)).map(s=>s.a)).size>=15)break}
- const pool=shuf(sp.filter(s=>on.includes(s.f+s.z))),cap={},ids=[];
- for(const s of pool){if(ids.length>=50)break;const c=cap[s.a]||0;if(c>=4)continue;cap[s.a]=c+1;ids.push(s.i)}
+ const areas=shuf([...new Set(sp.map(s=>s.f+s.z))]);const on=['0O','1H','2H','3H'].filter(a=>sp.some(s=>s.f+s.z===a));let cnt=on.reduce((n,a)=>n+sp.filter(s=>s.f+s.z===a).length,0);for(const a of areas){on.push(a);cnt+=sp.filter(s=>s.f+s.z===a).length;if(cnt>=110&&new Set(sp.filter(s=>on.includes(s.f+s.z)).map(s=>s.a)).size>=15)break}
+ const pool=shuf(sp.filter(s=>on.includes(s.f+s.z))),cap={},fc={},ids=[];
+ for(const s of pool){if(ids.length>=50)break;const c=cap[s.a]||0;if(c>=4||(fc[s.f]||0)>=15)continue;cap[s.a]=c+1;fc[s.f]=(fc[s.f]||0)+1;ids.push(s.i)}
  for(const s of pool){if(ids.length>=50)break;if(!ids.includes(s.i))ids.push(s.i)}
- PZ={d:gday,ids,done:[]};pzSave()}
+ PZ={d:gday,ids,done:[],v:2};pzSave()}
 const PZ_MAX=15;
-const pzEnsure=()=>{if(PZ.d!==gday||!PZ.ids.length)pzNewDay()};
+const pzEnsure=()=>{if(PZ.d!==gday||!PZ.ids.length||PZ.v!==2){const dn=(PZ.d===gday&&PZ.done)?PZ.done.length:0;pzNewDay();if(dn)PZ.done=[]}};
 const pzAt=(x,y)=>{for(const i of PZ.ids){const s=PZ_SPOTS[i];if(s&&s.f===FLR&&s.x===x&&s.y===y&&!PZ.done.includes(i))return Object.assign({i},s)}return null};
 function pzShown(s){const a=areaAt(p.x,p.y)||'O';if(s.z==='O')return Math.hypot(p.x-s.x,p.y-s.y)<=10;return a===s.z}
 function pzDrawIcons(){if(!started||FLR>3||gday===0)return;pzEnsure();if(PZ.done.length>=PZ_MAX)return;const t=performance.now();g.save();g.textAlign='center';g.textBaseline='middle';
@@ -3221,6 +3221,98 @@ function cstuTalk(o){if(cs||dlg)return;PT.L=PT.R=null;const i=(o.fid==='nelson'&
  let t=CS_TALK[o.fid][i];if(o.fid==='joy'&&i===0&&FR.jq==='done')t='Cùng lớp thật rồi! Cảm ơn cậu lúc nãy nhé, lát nữa tớ nói chuyện tiếp!';
  const stp=[{say:(CS_LN[CH]?(CS_LN[CH][o.fid]||CS_LN[CH].g):(CS_JAKI2[o.fid]||CS_JAKI))[i],who:'Jaki'},{say:t,who:o.name}];if(o.fid==='nelson'&&i===0&&!o.gave)stp.push({fn:()=>{if(invGive('fCake')){o.gave=1;say('Nhận được 1 Bánh kem từ Nelson');try{sfx.blip()}catch(e){}}else say('Túi đã đầy, chưa nhận được bánh')}});
  cs={lock:1,steps:stp,i:0,s:0,t:0,dir:null,run:false}}
+
+// ===== Các bạn đi lòng vòng trong trường sau khi rời lớp =====
+// Mỗi bạn có vài nơi hay lui tới theo tính cách (fav = xác suất chọn nơi quen thuộc), còn lại thỉnh thoảng đi tới chỗ bất kỳ trong trường để khó đoán.
+const RM={on:false,fl:-1,clock:0,S:{},res:new Set()};
+const RM_ALL=[[0,71,102,'căng tin'],[0,108,102,'khu tủ giày'],[0,14,103,'hồ bơi'],[0,46,101,'sân trường'],[0,60,106,'sân sau'],[0,90,101,'sân trường'],[0,106,102,'sân trường'],
+ [1,107,27,'phòng âm nhạc'],[1,58,22,'kho'],[1,76,22,'nhà vệ sinh'],[1,92,22,'nhà vệ sinh'],[1,107,44,'phòng mỹ thuật'],[1,70,102,'nhà thi đấu'],[1,107,64,'lớp học'],[1,127,64,'lớp học'],[1,107,102,'lớp học'],
+ [2,107,35,'thư viện'],[2,59,22,'kho'],[2,78,110,'nhà thi đấu'],[2,107,83,'lớp 2-C'],[2,127,83,'lớp học'],[2,107,64,'lớp học'],[2,127,102,'lớp học'],
+ [3,107,24,'phòng giáo viên'],[3,107,42,'phòng thực hành'],[3,59,22,'kho'],[3,107,83,'lớp học'],[3,127,64,'lớp học'],
+ [4,109,55,'sân thượng']];
+const RM_PERS={
+ tidus:{fav:.55,sp:250,wait:[8,18],h:[[4,109,55,4,'sân thượng'],[0,60,106,2,'sân sau'],[3,107,24,1,'phòng giáo viên']],loc:{'sân thượng':'Chỗ này yên tĩnh nhất trường. Đừng đồn ra ngoài nhé.','sân sau':'Góc này khuất tầm mắt thầy cô. Chuẩn bài.'},lost:'Chán chỗ cũ rồi, thử đi đâu đó khác xem sao.'},
+ luke:{fav:.6,sp:360,wait:[10,24],h:[[2,107,35,4,'thư viện'],[2,107,83,2,'lớp 2-C'],[1,107,64,1,'lớp học']],loc:{'thư viện':'Thư viện yên tĩnh thật... tôi chỉ định nằm một chút thôi.','lớp 2-C':'Tôi hay ngồi lại lớp. Quen chỗ rồi.'},lost:'Tôi đi lung tung vì không ngủ nổi. Đừng hỏi.'},
+ nelson:{fav:.55,sp:250,wait:[8,18],h:[[0,71,102,5,'căng tin'],[0,106,102,1,'sân trường']],loc:{'căng tin':'Đói thì ghé căng tin. Không có gì trong cặp thì tớ nấu.','sân trường':'Hít chút khí trời cho khỏe, rồi lại quay về bếp.'},lost:'Tự nhiên muốn đi dạo. Cậu có thấy cái gì ăn được ở đây không?'},
+ masta:{fav:.4,sp:230,wait:[5,12],h:[[2,107,83,3,'lớp 2-C'],[1,107,64,2,'lớp học'],[3,107,83,2,'lớp học']],loc:{'lớp 2-C':'Tôi đang xem lại hiện trường. Chuyện bắt đầu từ chỗ này.','lớp học':'Từng lớp một. Manh mối nằm ở chi tiết nhỏ.'},lost:'Tôi tuần tra theo cách của tôi. Cậu đừng cản đường.'},
+ vali:{fav:.15,sp:150,wait:[2,6],h:[[0,106,102,1,'sân trường']],loc:{'sân trường':'Ối, tớ chạy qua chạy lại thôi! Cậu cần gì không?'},lost:'Tớ đang chạy tìm người cần giúp! Đi nhanh quá nên lạc rồi hì hì.'},
+ kayli:{fav:.5,sp:320,wait:[8,20],h:[[3,107,42,4,'phòng thực hành'],[1,58,22,2,'kho'],[2,59,22,1,'kho']],loc:{'phòng thực hành':'Chỗ này có nhiều đồ để tháo ra xem. Đừng chạm vào cái đang bật.','kho':'Trong kho có nhiều đồ cũ hay lắm. Tớ định lấy ít linh kiện.'},lost:'Ơ, tớ đang định đi đâu nhỉ? À, quên mất rồi.'},
+ lena:{fav:.5,sp:170,wait:[6,14],h:[[1,70,102,3,'nhà thi đấu'],[2,78,110,2,'nhà thi đấu'],[4,109,55,1,'sân thượng']],loc:{'nhà thi đấu':'Ở đây có chỗ ném bóng. Muốn đấu không?','sân thượng':'Trên này thoáng. Tôi tập chạy vòng quanh.'},lost:'Ngồi yên chán quá, tôi đi loanh quanh cho đỡ nóng.'},
+ joy:{fav:.45,sp:230,wait:[7,16],h:[[0,71,102,3,'căng tin'],[0,106,102,3,'sân trường']],loc:{'căng tin':'Ở căng tin hay có đồ ngon! Cậu muốn ăn gì cùng tớ không?','sân trường':'Tớ thích ra sân trường chơi. Có bạn nào rủ là vui lắm.'},lost:'Tớ muốn đi xem chỗ khác một chút. Cậu đi cùng không?'},
+ isabel:{fav:.6,sp:280,wait:[10,22],h:[[1,107,27,4,'phòng âm nhạc'],[4,109,55,3,'sân thượng']],loc:{'phòng âm nhạc':'...Ở đây tôi nghe nhạc không bị ai làm phiền.','sân thượng':'Gió trên này hợp với tâm trạng tôi.'},lost:'...Đừng hỏi tôi đi đâu.'}};
+const rmRand=(a,b)=>a+Math.random()*(b-a);
+function rmFloorObjs(f){return f===FLR?objs:(FLOORS[f]&&FLOORS[f].objs)||[]}
+function rmFree(f,x,y,fid){const bl=new Set(),A=rmFloorObjs(f);for(const o of A){if(!o.solid&&o.type!=='plate'&&o.type!=='door')continue;if(o.type==='rmn'&&o.fid===fid)continue;for(let a=o.x;a<o.x+(o.w||1);a++)for(let b=o.y;b<o.y+(o.h||1);b++)bl.add(a+','+b)}
+ const okT=(a,b)=>walk(a,b)&&!bl.has(a+','+b)&&!RM.res.has(f+':'+a+','+b)&&[[1,0],[-1,0],[0,1],[0,-1]].filter(d=>walk(a+d[0],b+d[1])&&!bl.has((a+d[0])+','+(b+d[1]))).length>=3;
+ for(let r=0;r<=8;r++)for(let dx=-r;dx<=r;dx++)for(let dy=-r;dy<=r;dy++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;if(okT(x+dx,y+dy))return[x+dx,y+dy]}return null}
+function rmPath(sx,sy,tx,ty,self){const bl=new Set();for(const o of objs){if(o===self||o.type==='door')continue;if(o.type==='plate'&&o.go!==undefined){if(!(o.x===tx&&o.y===ty))bl.add(o.x+','+o.y);continue}if(!o.solid)continue;for(let a=o.x;a<o.x+(o.w||1);a++)for(let b=o.y;b<o.y+(o.h||1);b++)bl.add(a+','+b)}
+ const isDoor=(x,y)=>doors.some(d=>x>=d.x&&x<d.x+d.w&&y>=d.y&&y<d.y+d.h),key=(x,y)=>x+','+y,prev={},q=[[sx,sy]];prev[key(sx,sy)]=null;let n=0;
+ while(q.length&&n++<12000){const [x,y]=q.shift();if(x===tx&&y===ty){const r=[];let c=[x,y];while(c&&!(c[0]===sx&&c[1]===sy)){r.unshift(c);c=prev[key(c[0],c[1])]}return r}
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(prev[key(nx,ny)]!==undefined)continue;if(!(nx===tx&&ny===ty)&&(bl.has(key(nx,ny))||!(walk(nx,ny)||isDoor(nx,ny))))continue;prev[key(nx,ny)]=[x,y];q.push([nx,ny])}}return null}
+function rmStairs(f,to){for(const o of rmFloorObjs(f))if(o.type==='plate'&&o.go===to)return o;return null}
+function rmPick(fid,s){const P=RM_PERS[fid];let h,fav=false;
+ const taken=lab=>Object.values(RM.S).filter(q=>q!==s&&q.tg&&q.tg.f===lab[0]&&q.tg.x===lab[1]&&q.tg.y===lab[2]).length;
+ for(let tries=0;tries<8;tries++){fav=Math.random()<P.fav;
+  if(fav){const tot=P.h.reduce((a,q)=>a+q[3],0);let r=Math.random()*tot;h=P.h[0];for(const q of P.h){r-=q[3];if(r<=0){h=q;break}}}else h=RM_ALL[Math.floor(Math.random()*RM_ALL.length)];
+  if(s.tg&&h[0]===s.tg.f&&h[1]===s.tg.x&&h[2]===s.tg.y)continue;if(taken(h)>=2)continue;break}
+ return{f:h[0],x:h[1],y:h[2],lab:h[4]||h[3],fav:P.h.some(q=>q[0]===h[0]&&q[1]===h[1]&&q[2]===h[2])}}
+function roamStart(){if(RM.on)return;if(typeof netOn==='function'&&netOn())return;RM.on=true;RM.S={};RM.res.clear();RM.fl=-1;
+ const ids=Object.keys(CS_SEAT).filter(k=>k!=='boxy');const home=[[2,107,83],[2,107,83]];
+ ids.forEach((fid,i)=>{const s={fid,f:2,x:107,y:83,wait:rmRand(2,9)*1000,mode:'idle',o:null,tg:null,arr:null,fid2:i};RM.S[fid]=s;let h;for(let k=0;k<12;k++){h=rmPick(fid,s);if(h.lab!=='lớp 2-C')break}s.tg=h;rmArrive(s,h);s.f=h.f;s.x=h.ax;s.y=h.ay})}
+function roamStop(){RM.on=false;for(const k in RM.S){const o=RM.S[k].o;if(o){const i=CW.findIndex(c=>c.o===o);if(i>=0)CW.splice(i,1);rmObj(o)}}RM.S={};RM.res.clear();RM.fl=-1}
+function rmNear(x,y){const occ=new Set(objs.filter(o=>o.type==='rmn').map(o=>Math.round(o.x)+','+Math.round(o.y))),pl=new Set(objs.filter(o=>o.type==='plate'&&o.go!==undefined).map(o=>o.x+','+o.y));for(let r=1;r<=4;r++)for(let dx=-r;dx<=r;dx++)for(let dy=-r;dy<=r;dy++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const a=x+dx,b=y+dy,k=a+','+b;if(walk(a,b)&&!occ.has(k)&&!pl.has(k)&&!blocked(a,b))return[a,b]}return[x,y]}
+function rmSpawn(s){if(s.fid==='joy'&&objs.some(o=>o.type==='frn'&&o.fid==='joy'))return;const nm=s.fid[0].toUpperCase()+s.fid.slice(1);let t=s.arr?rmNear(s.arr.x,s.arr.y):null;if(!t)t=rmFree(s.f,s.x,s.y,s.fid)||[s.x,s.y];
+ const o={x:t[0],y:t[1],w:1,h:1,type:'rmn',fid:s.fid,solid:1,name:nm,text:'Một bạn cùng lớp đang đi lại trong trường.',n:0,px:t[0]*T,py:t[1]*T,dir:'d',step:0,al:1,get img(){return portImg(nm)}};
+ s.o=o;s.arr=null;objs.push(o);s.mode='idle';s.wait=s.pend?300:rmRand(1,5)*1000}
+function rmDespawn(s){const o=s.o;if(!o)return;const i=CW.findIndex(c=>c.o===o);if(i>=0)CW.splice(i,1);const k=objs.indexOf(o);if(k>=0)objs.splice(k,1);s.o=null}
+function rmArrive(s,h){if(s.tg&&s.tg.key)RM.res.delete(s.tg.key);const a=rmFree(h.f,h.x,h.y,s.fid);if(a){h.ax=a[0];h.ay=a[1];h.key=h.f+':'+a[0]+','+a[1];RM.res.add(h.key)}else{h.ax=h.x;h.ay=h.y}}
+function rmPlan(s,P){ // chọn nơi mới rồi bắt đầu đi
+ const h=rmPick(s.fid,s);if(s.tg&&s.tg.key)RM.res.delete(s.tg.key);s.tg=h;rmArrive(s,h);s.hi=h;rmStep(s)}
+function rmStep(s){const h=s.tg;if(!h)return;
+ if(s.f===h.f){ // cùng tầng với đích
+  if(s.o){const pt=rmPath(Math.round(s.o.x),Math.round(s.o.y),h.ax,h.ay,s.o);if(pt&&pt.length){s.o.solid=0;const P=RM_PERS[s.fid];cwGo(s.o,pt,P.sp,{any:true});s.mode='walk';return}s.o.x=h.ax;s.o.y=h.ay;s.o.px=h.ax*T;s.o.py=h.ay*T}
+  s.x=h.ax;s.y=h.ay;s.pend=null;rmIdle(s);return}
+ const ns=s.f+(h.f>s.f?1:-1),st=rmStairs(s.f,ns);
+ if(s.o&&st){const pt=rmPath(Math.round(s.o.x),Math.round(s.o.y),st.x,st.y,s.o);if(pt&&pt.length){s.o.solid=0;cwGo(s.o,pt,RM_PERS[s.fid].sp,{any:true});s.mode='stairs';s.st=st;s.ns=ns;return}}
+ rmTransit(s,ns)}
+function rmTransit(s,ns){const from=s.f;rmDespawn(s);s.f=ns;const back=rmStairs(ns,from);s.arr=back?{x:back.x,y:back.y}:null;s.pend=true;s.mode='transit';s.wait=rmRand(1.5,3.5)*1000}
+function rmIdle(s){s.mode='idle';const P=RM_PERS[s.fid];s.wait=rmRand(P.wait[0],P.wait[1])*1000;if(s.o){s.o.solid=1;s.o.step=0}}
+function updRoam(dt){
+ if(!RM.on){if((csAway||gday>0)&&!cs&&FLR<=4)roamStart();else return}
+ if(!(csAway||gday>0)){roamStop();return}
+ if(typeof netOn==='function'&&netOn()){roamStop();return}
+ RM.clock+=dt;
+ if(RM.fl!==FLR){for(const k in RM.S){const q=RM.S[k];const had=q.o;rmDespawn(q);if(had||q.mode==='walk'||q.mode==='stairs'||q.mode==='fidget'){if(q.mode==='stairs'&&q.ns!==undefined){const from=q.f;q.f=q.ns;const back=rmStairs(q.ns,from);q.arr=back?{x:back.x,y:back.y}:null;q.pend=true;q.mode='transit';q.wait=rmRand(1,3)*1000}else if(q.mode==='walk'||q.mode==='fidget'){if(q.tg){q.x=q.tg.ax;q.y=q.tg.ay;q.arr=null}q.pend=null;rmIdle(q)}}}for(let i=CW.length-1;i>=0;i--)if(CW[i].o&&CW[i].o.type==='rmn')CW.splice(i,1);RM.fl=FLR;if(FLR<=4)for(const k in RM.S){const s=RM.S[k];if(s.f===FLR&&!s.arr&&!s.pend)rmSpawn(s);else if(s.f===FLR)rmSpawn(s)}}
+ if(FLR>4||cs||dlg)return;
+ for(const k in RM.S){const s=RM.S[k],o=s.o;
+  if(o&&(s.mode==='walk'||s.mode==='stairs')){if(!cwBusy(o)){if(s.mode==='stairs'){rmTransit(s,s.ns)}else{o.step=0;s.pend=null;rmIdle(s)}}continue}
+  s.wait-=dt;if(s.wait>0)continue;
+  if(s.mode==='transit'){s.pend=false;if(s.tg&&s.f!==s.tg.f){rmStep(s)}else if(s.tg){rmStep(s)}else rmPlan(s);if(s.f===FLR&&!s.o)rmSpawn(s),rmStep(s);continue}
+  if(s.mode==='idle'){ // thỉnh thoảng đứng loanh quanh, rồi chọn nơi mới
+   if(o&&Math.random()<.25&&s.tg){const ax=s.tg.ax,ay=s.tg.ay,dx=Math.floor(rmRand(-2,3)),dy=Math.floor(rmRand(-2,3)),tx=ax+dx,ty=ay+dy;if(walk(tx,ty)&&(dx||dy)){const pt=rmPath(Math.round(o.x),Math.round(o.y),tx,ty,o);if(pt&&pt.length<5){o.solid=0;cwGo(o,pt,RM_PERS[s.fid].sp+60,{any:true});s.mode='fidget';s.wait=0;continue}}}
+   rmPlan(s);continue}
+  if(s.mode==='fidget'){rmIdle(s);s.wait=rmRand(2,5)*1000;if(o)o.dir=['u','d','l','r'][Math.floor(Math.random()*4)];continue}}
+ // mở cửa khi bạn tới gần
+ for(const d of doors){let near=false;for(const k in RM.S){const o=RM.S[k].o;if(o&&Math.hypot(o.x-(d.x+(d.w-1)/2),o.y-(d.y+(d.h-1)/2))<=2.2){near=true;break}}if(near&&!d.target){d.target=1;d.cl=0;d.used=0}}}
+const RM_TALK={
+ tidus:['Đi dạo thôi. Đừng lo, tôi không cắn đâu.','Nếu cậu thấy thầy Cà Rốt thì báo tôi một tiếng. Tôi muốn tránh mặt.','Muốn sống thì đừng đi một mình. Mà thôi, tùy cậu.'],
+ luke:['...À, cậu đó hả. Tôi đang cố cho khỏi ngủ gật.','Đêm qua tôi thức tới sáng. Giờ đầu óc chậm lắm.','Nếu tôi ngủ gật ở đâu đó thì gọi tôi dậy giùm nhé.'],
+ nelson:['Cậu ăn chưa? Tớ lúc nào cũng mang đồ ăn theo.','Đừng để bụng đói mà đi lung tung, dễ vấp lắm.','Hễ rảnh là tớ lại nấu. Cậu thích món gì?'],
+ masta:['Tôi đang quan sát. Đừng làm phiền.','Ai đi đâu, lúc nào, tôi đều ghi nhớ hết.','Trong đám này có ma sói. Tôi sẽ tìm ra, chỉ là chưa phải bây giờ.'],
+ vali:['Ơ cậu! Tớ đang chạy đi tìm người cần giúp!','Ối... xin lỗi, tớ suýt đâm vào cậu!','Cần gì cứ nói tớ nhé, tớ giúp liền! ...mà đừng nhờ việc gì quá phức tạp.'],
+ kayli:['Hm? À, chào. Tớ đang nghĩ xem cái cửa này hoạt động ra sao.','Cậu có thấy cái ốc vít nào không? Chắc tớ làm rơi rồi.','Tớ lại quên mất đang đi đâu. Thôi kệ.'],
+ lena:['Gì đấy? Nói nhanh, tôi đang chạy bộ.','Ai làm gì cậu thì bảo tôi. Đừng có làm màu.','Nếu cậu yếu quá thì tôi cũng khó bảo vệ lắm. Tập thể lực đi.'],
+ joy:['Ơ, là cậu! Tớ đi dạo một vòng cho đỡ sợ.','Cậu đi cùng tớ một đoạn được không? Một mình tớ hơi sợ.','Cậu nhớ cẩn thận nha. Tớ không muốn ai bị làm sao hết.'],
+ isabel:['...','Đừng hỏi tôi đi đâu.','Cậu ồn ào quá. ...nhưng thôi, cũng được.']};
+const RM_ASK={jaki:['Ê, cậu đi đâu đấy?','Cậu có thấy gì lạ không?','Cẩn thận nhé, đêm nay không yên đâu.'],maya:['Xin chào, cậu đang đi đâu vậy?','Cậu có thấy gì khác lạ không?','Cậu cẩn thận nhé.'],yasu:['Cậu đi đâu?','Có gì lạ không?','Cẩn thận.']};
+function rmnTalk(o){if(cs||dlg)return;const s=RM.S[o.fid];if(!s)return;PT.L=PT.R=null;addMet(o.fid);
+ const i=o.n%3;o.n++;o.dir={u:'d',d:'u',l:'r',r:'l'}[p.dir]||'d';
+ const ci=CW.findIndex(c=>c.o===o);if(ci>=0)CW.splice(ci,1);if(s.mode!=='idle'){rmIdle(s);o.step=0}o.solid=1;s.wait=9000;
+ const P=RM_PERS[o.fid],h=s.tg,at=h&&s.f===h.f&&Math.round(o.x)===h.ax&&Math.round(o.y)===h.ay,fav=at&&h.fav,lab=h?h.lab:'';
+ let t=RM_TALK[o.fid][i];if(i===0){if(fav&&P.loc[lab])t=P.loc[lab];else if(at&&!fav)t=P.lost}
+ const stp=[{say:(RM_ASK[CH]||RM_ASK.jaki)[i],who:'Jaki'},{say:t,who:o.name}];
+ if(o.fid==='nelson'&&!s.gave){stp.push({say:'Nè, cầm lấy cái bánh này, ăn cho tỉnh táo.',who:o.name});stp.push({fn:()=>{if(invGive('fCake')){s.gave=1;say('Nhận được 1 Bánh kem từ Nelson');try{sfx.blip()}catch(e){}}else say('Túi đã đầy, chưa nhận được bánh')}})}
+ cs={lock:1,steps:stp,i:0,s:0,t:0,dir:null,run:false}}
 const inRoom2C=()=>FLR===2&&p.x>=99&&p.x<=114&&p.y>=75&&p.y<=92;
 function pathTo(tx,ty){const sx=Math.round(p.x),sy=Math.round(p.y),key=(x,y)=>x+','+y,prev={},q=[[sx,sy]];prev[key(sx,sy)]=null;
  while(q.length){const [x,y]=q.shift();if(x===tx&&y===ty){const r=[];let c=[x,y];while(c&&!(c[0]===sx&&c[1]===sy)){r.unshift(c);c=prev[key(c[0],c[1])]}return r}
@@ -3255,7 +3347,7 @@ const LEAF=new Image();LEAF.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA
 function drawDust(o){const cx=o.x*T+16,cy=o.y*T+18;g.save();g.imageSmoothingEnabled=false;if(LEAF.complete&&LEAF.naturalWidth){g.drawImage(LEAF,cx-18,cy-14,36,36);g.save();g.translate(cx+3,cy+3);g.rotate(1.6);g.globalAlpha=.85;g.drawImage(LEAF,-12,-12,24,24);g.restore()}g.restore()}
 function burst(x,y,cols,n,sp){for(let i=0;i<n;i++){const a=Math.random()*6.283,v=(sp||70)*(.3+Math.random());parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-12,l:0,m:.5+Math.random()*.9,c:cols[(Math.random()*cols.length)|0],s:Math.random()<.5?2:4})}}
 function zap(x0,y0,x1,y1){for(let i=0;i<46;i++){const u=i/45;parts.push({x:x0+(x1-x0)*u+(Math.random()-.5)*8,y:y0+(y1-y0)*u+(Math.random()-.5)*8,vx:(Math.random()-.5)*30,vy:(Math.random()-.5)*30,l:-u*.35,m:.5+Math.random()*.4,c:['#ffb347','#ff6a00','#fff2b0','#e0a8ff','#b55cf0'][(Math.random()*5)|0],s:Math.random()<.5?2:3})}}
-function scnReset(){try{sfx.scnBgm(0)}catch(e){}deadV=false;scnCam=false;csAway=false;BELL.done=false;CW.length=0;CFX.length=0;SMK.length=0;camT=null;scnMr=null;lookAr=false;scnDoors(false);
+function scnReset(){try{roamStop()}catch(e){}try{sfx.scnBgm(0)}catch(e){}deadV=false;scnCam=false;csAway=false;BELL.done=false;CW.length=0;CFX.length=0;SMK.length=0;camT=null;scnMr=null;lookAr=false;scnDoors(false);
  for(const arr of [objs,...Object.values(FLOORS).filter(Boolean).map(f=>f.objs).filter(Boolean)])for(let i=arr.length-1;i>=0;i--)if(arr[i].type==='cact'||(arr[i].type==='dust'&&arr[i].fresh))arr.splice(i,1);try{addClassStudents()}catch(e){}}
 function showDeath(){let d=document.getElementById('death');if(!d){d=document.createElement('div');d.id='death';d.style.cssText='position:fixed;inset:0;z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;font:900 clamp(30px,7vw,60px) "Be Vietnam Pro","Noto Sans",sans-serif;letter-spacing:.08em;text-shadow:4px 4px 0 #000;background:rgba(120,0,0,0);transition:background 1.6s;text-align:center';document.body.appendChild(d)}
  d.innerHTML='<div>BẠN ĐÃ CHẾT!</div><div style="font:700 18px \'Be Vietnam Pro\',\'Noto Sans\',sans-serif;letter-spacing:.02em;margin-top:16px;text-shadow:2px 2px 0 #000">Vi phạm nội quy: vào lớp trễ</div>';d.style.display='flex';d.style.background='rgba(120,0,0,0)';setTimeout(()=>{d.style.background='rgba(110,0,0,.9)'},30);
@@ -3345,7 +3437,7 @@ function startBell(){if(BELL.done)return;BELL.done=true;mrHide=false;
   Fn(()=>{showCard('Luật chơi ma sói','Trong lớp có <b>2 ma sói</b> trà trộn vào dân làng. Mỗi đêm ma sói đi săn người.<br>Dân làng suy luận và <b>bỏ phiếu</b> để tìm ra ma sói.<br>Trò chơi kết thúc khi số người <b>không còn nhiều hơn</b> số sói.<br><small>Ở đây là sinh tồn thật: bị bắt thì thua. Luật bỏ phiếu và vai trò chi tiết sẽ được bổ sung thêm.</small>')}),U(()=>!cardOpen),
   Fn(()=>{showCard('Bắt đầu nửa đêm','Trò chơi bắt đầu từ <b>12 giờ đêm</b> mỗi ngày. Hãy giữ kín lá bài của bạn, <b>tránh ma sói</b> và dùng thể lực khôn ngoan.<br>Bạn có thể chạy, '+(CH==='jaki'?'dịch chuyển, ':'')+'trốn vào tủ và nói chuyện với các bạn trong trường.')}),U(()=>!cardOpen),
   Fn(()=>{if(CH==='maya')showCard('Kỹ năng Ném đồ ăn (F)','Bấm <b>F</b> để <b>ném đồ ăn</b> trong túi về phía trước. Đồ ăn có thể đánh lạc hướng hoặc làm đối phương chùn bước.<br><small>Cần có đồ ăn trong túi. Nếu không có, Maya sẽ nhảy lên thay thế.</small>');else if(CH==='yasu'){FR.skill=true;try{frSave()}catch(e){}showCard('Kỹ năng Vẽ (F)','Bấm <b>F</b> để <b>vẽ</b>: Yasu phác nhanh một nét tranh để tạo vật cản hoặc đánh lạc hướng.<br><small>Có thời gian hồi chiêu, hãy dùng đúng lúc.</small>')}}),U(()=>!cardOpen),
-  Fn(()=>{scnCam=false;csAway=true;setCantLock(false);for(const o of objs.filter(q=>q.type==='cstu'))rmObj(o);gmin=0;setMis(null)})];
+  Fn(()=>{scnCam=false;csAway=true;setCantLock(false);for(const o of objs.filter(q=>q.type==='cstu'))rmObj(o);gmin=0;setMis(null);try{roamStart()}catch(e){}})];
  cs={lock:1,steps,i:0,s:0,t:0,dir:null,run:false}}
 function updBell(){if(BELL.done||gday!==0||gmin<1425||gmin>=1439||!started||menuOpen||cs||dlg||tut||tut2||sl||tp||rc||pk||shopO||hid||aim)return;startBell()}
 function devSetTime(s){s=(s||'').trim();const m=s.match(/^(\d{1,2})(?:[:h.,](\d{1,2}))?$/);if(!m||+m[1]>23||(m[2]&&+m[2]>59)){try{bigToast('Giờ không hợp lệ','Nhập dạng 23 hoặc 23:45')}catch(e){}return}
