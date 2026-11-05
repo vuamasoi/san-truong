@@ -33,3 +33,11 @@ Mở https://ten-cua-ban.onrender.com/whoami?key=CHUỖI_BÍ_MẬT trên máy t�
 ## Nén trang và chống cheat tốc độ
 - Máy chủ tự nén trang (brotli/gzip) và dùng ETag: lần vào đầu tải khoảng 3,2 MB thay vì 4,8 MB, các lần sau gần như không tải lại.
 - Máy chủ giới hạn tốc độ di chuyển (MOVE_RATE, mặc định 10,5 ô/giây, bộ đệm MOVE_CAP 24 ô). Ai "bay" nhanh hơn sẽ bị kéo lại vị trí; vi phạm kéo dài sẽ bị ngắt kết nối.
+
+## Chơi thử riêng tư (link khóa 1 thiết bị)
+- Trang chơi thử (bắt đầu 23:45, không skip, chỉ có nút chọn cốt truyện) nằm trong `data/pt.bin`, đã nén và mã hóa AES-256-GCM vì kho này công khai. Cần đặt biến môi trường **`PT_SECRET`** trên Render (cùng giá trị đã dùng để đóng gói) thì server mới giải mã và phục vụ ở `/p/<token>`.
+- Link dạng `https://ten-cua-ban.onrender.com/p/<token>`. Lần đầu mở: gắn với thiết bị (cookie) + IP của người mở. Sau đó chỉ thiết bị đó vào lại được (đổi wifi/4G vẫn vào nhờ cookie); người khác mở link nhận trang từ chối.
+- Tạo link: `PT_SECRET=... node tools/pt-token.js 7 3` (hạn 7 ngày, 3 link). Hoặc `curl -X POST -H "x-admin-key: $ADMIN_KEY" "https://.../pt-admin/new?days=7"` (key đặt trong header, không đặt trong URL).
+- Thu hồi: thêm id (10 ký tự đầu của token) vào `data/pt-revoked.json` rồi đẩy lên kho (bền vững), hoặc `POST /pt-admin/revoke?id=...` với header `x-admin-key` (có hiệu lực ngay nhưng mất khi server khởi động lại). `GET /pt-admin/list` xem ai đã dùng; `POST /pt-admin/reset?id=...` gỡ gắn thiết bị.
+- Đóng gói lại trang: `PT_SECRET=... node tools/pt-pack.js duong-dan/play.html`.
+- Giới hạn: trạng thái "đã gắn thiết bị" nằm trong bộ nhớ server, Render gói Free ngủ sau 15 phút không có truy cập và mất trạng thái khi triển khai lại; khi đó người đầu tiên mở link sẽ được gắn (chủ thật vẫn vào lại được nhờ cookie). Server tự gọi `/health` mỗi 10 phút khi chạy trên Render để giảm ngủ.

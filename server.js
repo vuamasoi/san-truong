@@ -15,7 +15,9 @@ loadPage();
 process.on('uncaughtException',e=>console.error('uncaught',e&&e.message));
 process.on('unhandledRejection',e=>console.error('unhandled',e&&e.message));
 
+const PT=require('./playtest.js');
 const srv=http.createServer((q,r)=>{
+ if(PT.handle(q,r))return;
  if(q.url==='/health'){r.writeHead(200);r.end('ok');return}
  if(q.url.startsWith('/whoami')){let k='';try{k=new URL(q.url,'http://x').searchParams.get('key')||''}catch(e){}const ip=ipOf(q);if(!(ADMIN_KEY?safeEq(k,ADMIN_KEY):isLoop(ip))){r.writeHead(403);r.end('forbidden');return}
   const h=q.headers;r.writeHead(200,{'Content-Type':'application/json'});r.end(JSON.stringify({dang_dung:ip,cf:h['cf-connecting-ip']||null,trueClient:h['true-client-ip']||null,xff:h['x-forwarded-for']||null,socket:q.socket.remoteAddress},null,1));return}
@@ -30,6 +32,7 @@ const wss=new WebSocketServer({server:srv,path:'/ws',maxPayload:1024,verifyClien
  const o=info.origin,h=info.req.headers.host;
  if(o){try{if(new URL(o).host!==h){cb(false,403,'bad origin');return}}catch(e){cb(false,403,'bad origin');return}}
  cb(true)}});
+PT.init({ipOf});
 const rooms=new Map();               // tên phòng -> Map(id -> {ws,p,ip})
 const ipSockets=new Map(),ipPlayers=new Map();
 let nsock=0,nid=1;
